@@ -40,6 +40,36 @@ proc main in
 end
 ```
 
+Raylib Speedrun:
+
+```porth
+include "std.porth"
+
+linkflag "-lraylib"
+linkflag "-lm"
+
+extern proc InitWindow int int ptr in end
+extern proc WindowShouldClose -- bool in end
+extern proc BeginDrawing in end
+extern proc ClearBackground int in end
+extern proc EndDrawing in end
+extern proc CloseWindow in end
+
+const BACKGROUND 4280295679 end
+
+proc main in
+  WIDTH HEIGHT "Hello from Porth!"c InitWindow
+
+  while WindowShouldClose lnot do
+    BeginDrawing
+      BACKGROUND ClearBackground
+    EndDrawing
+  end
+
+  CloseWindow
+end
+```
+
 ## Quick Start
 
 ### Bootstrapping
