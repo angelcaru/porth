@@ -5123,6 +5123,15 @@ proc main in
   "."     include-paths-add
   "./std" include-paths-add
 
+  // Include paths from environment variable
+  "PORTH_INCLUDE_PATHS" getenv cstr-to-str
+  while over 0 != do
+    let n s in
+      n s ':' str-chop-by-delim-2
+      include-paths-add
+    end
+  end drop drop
+
   memory args sizeof(ptr) end
   argv args !ptr
 
