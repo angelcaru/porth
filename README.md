@@ -6,26 +6,6 @@ Porth is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programmi
 
 *(If you never heard about this kind of languages before check out [https://concatenative.org/](https://concatenative.org/))*
 
-## No More Updates to This Repo
-
-Due to certain individuals trying to disrupt the design and development process of the language its reference implementation is closed until it's finished. As soon as I'm comfortable with the design of the language the source code is gonna be open again along with accepting contributions.
-
-In the meantime feel free to do whatever you want with the previous versions of the compiler under MIT license.
-
-To learn how the entire thing has started check out the playlist with development streams: https://www.youtube.com/watch?v=8QP2fDBIxjM&list=PLpM-Dvs8t0VbMZA7wW9aR3EtBqe2kinu4
-
-Feel free to use any information about the language and the compiler from the streams however you want.
-
-## How to Access the Last Open Version
-
-Due to computer illiteracy reaching critical levels of me begin able to "close" the entire source code for some people with just a single commit, I'm "opening" the code back. You can access it by just cloning this repo:
-
-```console
-$ git clone https://gitlab.com/tsoding/porth.git
-```
-
-Have fun! Feel free to do whatever you want with it! :)
-
 ## Development Milestones
 
 - [x] Compiled to a native instruction set (only x86_64 for now)
