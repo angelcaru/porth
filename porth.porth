@@ -1296,14 +1296,14 @@ const PROC_EXTERN 1 offset end
 const COUNT_PROC_TYPES reset end
 
 /// Array of procedures of the compiled program
-const Proc.name sizeof(Str)       offset end
-const Proc.addr sizeof(u64)       offset end
-const Proc.loc  sizeof(Loc)       offset end
-const Proc.ins  sizeof(TypeStack) offset end
-const Proc.outs sizeof(TypeStack) offset end
-assert "Exhaustive handling of Proc.type field definition" COUNT_PROC_TYPES 3 = end
-const Proc.type sizeof(int)       offset end
-const Proc.size sizeof(int)       offset end
+const Proc.name sizeof(Str)        offset end
+const Proc.addr sizeof(u64)        offset end
+const Proc.extern-name sizeof(Str) offset end
+const Proc.loc  sizeof(Loc)        offset end
+const Proc.ins  sizeof(TypeStack)  offset end
+const Proc.outs sizeof(TypeStack)  offset end
+const Proc.type sizeof(int)        offset end
+const Proc.size sizeof(int)        offset end
 const sizeof(Proc)                 reset end
 const PROCS_CAP 1024 end
 memory procs-count sizeof(u64) end
@@ -1748,9 +1748,9 @@ in
 
              "    mov rbx, rsp\n"             bfd bputs
              "    mov rsp, [ret_stack_rsp]\n" bfd bputs
-             "    call "              bfd bputs
-             prok Proc.name ptr+ @Str bfd bputs
-             "\n"                     bfd bputs
+             "    call "                      bfd bputs
+             prok Proc.extern-name ptr+ @Str  bfd bputs
+             "\n"                             bfd bputs
              "    mov [ret_stack_rsp], rsp\n" bfd bputs
              "    mov rsp, rbx\n"             bfd bputs
 
@@ -2067,9 +2067,9 @@ in
         dup sizeof(Proc) * procs +ptr
         let prok in
           prok Proc.type ptr+ @int PROC_EXTERN = if
-            "extrn "                 bfd bputs
-            prok Proc.name ptr+ @Str bfd bputs
-            "\n"                     bfd bputs
+            "extrn "                        bfd bputs
+            prok Proc.extern-name ptr+ @Str bfd bputs
+            "\n"                            bfd bputs
           end
         end
         1 +
@@ -2676,6 +2676,22 @@ in
       1 exit
     end
 
+    proc-type PROC_EXTERN = if
+      token Token.type ptr+ @64 TOKEN_STR = if
+          token Token.value ptr+ @Str
+          prok Proc.extern-name ptr+
+        !Str
+        false
+      else
+        true
+      end
+      token lexer lexer-next-token lnot if
+        token Token.loc ptr+ eputloc
+        ": ERROR: expected procedure name but found nothing\n" eputs
+        1 exit
+      end
+    else false end
+
     token Token.type ptr+ @64 TOKEN_WORD != if
       token Token.loc ptr+ eputloc
       ": ERROR: expected procedure name to be a word but found " eputs
@@ -2690,7 +2706,8 @@ in
     token Token.loc ptr+
     check-name-redefinition
 
-    sizeof(Str) token Token.value ptr+ prok Proc.name ptr+ memcpy drop
+       sizeof(Str) token Token.value ptr+ prok Proc.name ptr+ memcpy drop
+    if sizeof(Str) token Token.value ptr+ prok Proc.extern-name ptr+ memcpy drop end
 
     prok
       lexer over Proc.ins ptr+ parse-proc-contract-list if

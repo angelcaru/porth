@@ -48,25 +48,25 @@ include "std.porth"
 linkflag "-lraylib"
 linkflag "-lm"
 
-extern proc InitWindow int int ptr in end
-extern proc WindowShouldClose -- bool in end
-extern proc BeginDrawing in end
-extern proc ClearBackground int in end
-extern proc EndDrawing in end
-extern proc CloseWindow in end
+extern proc "InitWindow" raylib/init-window int int ptr in end
+extern proc "WindowShouldClose" raylib/window-should-close -- bool in end
+extern proc "BeginDrawing" raylib/begin-drawing in end
+extern proc "ClearBackground" raylib/clear-background int in end
+extern proc "EndDrawing" raylib/end-drawing in end
+extern proc "CloseWindow" raylib/close-window in end
 
 const BACKGROUND 4280295679 end
 
 proc main in
-  WIDTH HEIGHT "Hello from Porth!"c InitWindow
+  WIDTH HEIGHT "Hello from Porth!"c raylib/init-window
 
-  while WindowShouldClose lnot do
-    BeginDrawing
-      BACKGROUND ClearBackground
-    EndDrawing
+  while raylib/window-should-close lnot do
+    raylib/begin-drawing
+      BACKGROUND raylib/clear-background
+    raylib/end-drawing
   end
 
-  CloseWindow
+  raylib/close-window
 end
 ```
 
