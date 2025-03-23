@@ -64,6 +64,8 @@ const KEYWORD_ADDR_OF     1 offset end
 const KEYWORD_CALL_LIKE   1 offset end
 const KEYWORD_LET         1 offset end
 const KEYWORD_PEEK        1 offset end
+const KEYWORD_LINKFLAG    1 offset end
+const KEYWORD_EXTERN      1 offset end
 const COUNT_KEYWORDS         reset end
 
 proc keyword-by-name
@@ -74,7 +76,7 @@ in
   memory name sizeof(Str) end
   name !Str
   true
-  assert "Exhaustive keyword handling" COUNT_KEYWORDS 21 = end
+  assert "Exhaustive keyword handling" COUNT_KEYWORDS 23 = end
        name @Str "if"        streq if  KEYWORD_IF
   else name @Str "if*"       streq if* KEYWORD_IFSTAR
   else name @Str "else"      streq if* KEYWORD_ELSE
@@ -96,6 +98,8 @@ in
   else name @Str "call-like" streq if* KEYWORD_CALL_LIKE
   else name @Str "let"       streq if* KEYWORD_LET
   else name @Str "peek"      streq if* KEYWORD_PEEK
+  else name @Str "linkflag"  streq if* KEYWORD_LINKFLAG
+  else name @Str "extern"      streq if* KEYWORD_EXTERN
   else
     drop false 0
   end
@@ -108,7 +112,7 @@ proc keyword-name
   --
   int ptr
 in
-  assert "Exhaustive keyword handling" COUNT_KEYWORDS 21 = end
+  assert "Exhaustive keyword handling" COUNT_KEYWORDS 23 = end
        dup KEYWORD_IF          = if  "if"
   else dup KEYWORD_IFSTAR      = if* "if*"
   else dup KEYWORD_ELSE        = if* "else"
@@ -130,6 +134,8 @@ in
   else dup KEYWORD_CALL_LIKE   = if* "call-like"
   else dup KEYWORD_LET         = if* "let"
   else dup KEYWORD_PEEK        = if* "peek"
+  else dup KEYWORD_LINKFLAG    = if* "linkflag"
+  else dup KEYWORD_EXTERN      = if* "extern"
   else
     0 NULL
     here eputs ": unreachable\n" eputs
@@ -924,6 +930,11 @@ const OP_RET             1 offset end
 // operand type:    addr
 // operand purpose: the address of the procedure to call
 const OP_CALL            1 offset end
+// OP_CALL_EXTERN: Call an extern procedure.
+//
+// operand type:    int
+// operand purpose: the index of the extern procedure in the global procs array
+const OP_CALL_EXTERN     1 offset end
 // OP_INLINED: Denotes the start of the sequence of instructions that
 // were inlined from another procedure. The end of such sequence is
 // denoted by the size of the inlined procedure.
@@ -997,32 +1008,33 @@ proc op-type-as-str
   --
   int ptr // str
 in
-  assert "Exhaustive handling of Op types in print-op-type" COUNT_OPS 25 = end
-       dup OP_PUSH_INT        =  if  "OP_PUSH_INT"
-  else dup OP_PUSH_BOOL       =  if* "OP_PUSH_BOOL"
-  else dup OP_PUSH_PTR        =  if* "OP_PUSH_PTR"
-  else dup OP_PUSH_ADDR       =  if* "OP_PUSH_ADDR"
-  else dup OP_PUSH_GLOBAL_MEM =  if* "OP_PUSH_GLOBAL_MEM"
-  else dup OP_PUSH_LOCAL_MEM  =  if* "OP_PUSH_LOCAL_MEM"
-  else dup OP_PUSH_STR        =  if* "OP_PUSH_STR"
-  else dup OP_PUSH_CSTR       =  if* "OP_PUSH_CSTR"
-  else dup OP_INTRINSIC       =  if* "OP_INTRINSIC"
-  else dup OP_IF              =  if* "OP_IF"
-  else dup OP_IFSTAR          =  if* "OP_IFSTAR"
-  else dup OP_ELSE            =  if* "OP_ELSE"
-  else dup OP_END_IF          =  if* "OP_END_IF"
-  else dup OP_END_WHILE       =  if* "OP_END_WHILE"
-  else dup OP_PREP_PROC       =  if* "OP_PREP_PROC"
-  else dup OP_RET             =  if* "OP_RET"
-  else dup OP_CALL            =  if* "OP_CALL"
-  else dup OP_INLINED         =  if* "OP_INLINED"
-  else dup OP_WHILE           =  if* "OP_WHILE"
-  else dup OP_DO              =  if* "OP_DO"
-  else dup OP_CALL_LIKE       =  if* "OP_CALL_LIKE"
-  else dup OP_BIND_LET        =  if* "OP_BIND_LET"
-  else dup OP_BIND_PEEK       =  if* "OP_BIND_PEEK"
-  else dup OP_UNBIND          =  if* "OP_UNBIND"
-  else dup OP_PUSH_BIND       =  if* "OP_PUSH_BIND"
+  assert "Exhaustive handling of Op types in print-op-type" COUNT_OPS 26 = end
+       dup OP_PUSH_INT        = if  "OP_PUSH_INT"
+  else dup OP_PUSH_BOOL       = if* "OP_PUSH_BOOL"
+  else dup OP_PUSH_PTR        = if* "OP_PUSH_PTR"
+  else dup OP_PUSH_ADDR       = if* "OP_PUSH_ADDR"
+  else dup OP_PUSH_GLOBAL_MEM = if* "OP_PUSH_GLOBAL_MEM"
+  else dup OP_PUSH_LOCAL_MEM  = if* "OP_PUSH_LOCAL_MEM"
+  else dup OP_PUSH_STR        = if* "OP_PUSH_STR"
+  else dup OP_PUSH_CSTR       = if* "OP_PUSH_CSTR"
+  else dup OP_INTRINSIC       = if* "OP_INTRINSIC"
+  else dup OP_IF              = if* "OP_IF"
+  else dup OP_IFSTAR          = if* "OP_IFSTAR"
+  else dup OP_ELSE            = if* "OP_ELSE"
+  else dup OP_END_IF          = if* "OP_END_IF"
+  else dup OP_END_WHILE       = if* "OP_END_WHILE"
+  else dup OP_PREP_PROC       = if* "OP_PREP_PROC"
+  else dup OP_RET             = if* "OP_RET"
+  else dup OP_CALL            = if* "OP_CALL"
+  else dup OP_CALL_EXTERN     = if* "OP_CALL_EXTERN"
+  else dup OP_INLINED         = if* "OP_INLINED"
+  else dup OP_WHILE           = if* "OP_WHILE"
+  else dup OP_DO              = if* "OP_DO"
+  else dup OP_CALL_LIKE       = if* "OP_CALL_LIKE"
+  else dup OP_BIND_LET        = if* "OP_BIND_LET"
+  else dup OP_BIND_PEEK       = if* "OP_BIND_PEEK"
+  else dup OP_UNBIND          = if* "OP_UNBIND"
+  else dup OP_PUSH_BIND       = if* "OP_PUSH_BIND"
   else
     here eputs ": Unknown op type\n" eputs 1 exit
     0 NULL
@@ -1277,13 +1289,20 @@ end
 /// END TypeStack //////////////////////////////
 
 /// BEGIN Proc //////////////////////////////
+/// Types of procedure
+const PROC_NORMAL 1 offset end
+const PROC_INLINE 1 offset end
+const PROC_EXTERN 1 offset end
+const COUNT_PROC_TYPES reset end
+
 /// Array of procedures of the compiled program
 const Proc.name sizeof(Str)       offset end
 const Proc.addr sizeof(u64)       offset end
 const Proc.loc  sizeof(Loc)       offset end
 const Proc.ins  sizeof(TypeStack) offset end
 const Proc.outs sizeof(TypeStack) offset end
-const Proc.inlinable sizeof(bool) offset end
+assert "Exhaustive handling of Proc.type field definition" COUNT_PROC_TYPES 3 = end
+const Proc.type sizeof(int)       offset end
 const Proc.size sizeof(int)       offset end
 const sizeof(Proc)                 reset end
 const PROCS_CAP 1024 end
@@ -1529,6 +1548,33 @@ proc generate-op-comment ptr ptr in
   end
 end
 
+proc callconv-arg-sysv-x86_64
+  int // index
+  --
+  int ptr // name of the register (if empty, pass on the stack)
+in
+  let idx in
+         idx 0 = if  "rdi"
+    else idx 1 = if* "rsi"
+    else idx 2 = if* "rdx"
+    else idx 3 = if* "rcx"
+    else idx 4 = if* "r8"
+    else idx 5 = if* "r9"
+    else 0 NULL end
+  end
+end
+
+proc callconv-ret-sysv-x86_64
+  int // index
+  --
+  int ptr // name of the register (if empty, cannot return that many values)
+in
+  let idx in
+         idx 0 = if  "rax"
+    else 0 NULL end
+  end
+end
+
 proc generate-op-intel-linux-x86_64
   int // ip
   ptr // bfd
@@ -1545,7 +1591,7 @@ in
       op Op.type ptr+ @int
       op Op.operand ptr+ @int
       let type operand in
-        assert "Exhaustive handling of Op types in generate-op-intel-linux-x86_64" COUNT_OPS 25 = end
+        assert "Exhaustive handling of Op types in generate-op-intel-linux-x86_64" COUNT_OPS 26 = end
         type OP_PUSH_INT = if
            "    mov rax, "   bfd bputs operand bfd bputu "\n" bfd bputs
            "    push rax\n"  bfd bputs
@@ -1621,7 +1667,8 @@ in
            "\n"                             bfd bputs
            "    push rax\n"                 bfd bputs
         else type OP_PUSH_GLOBAL_MEM = if*
-           "    push mem+" bfd bputs operand bfd bputu "\n" bfd bputs
+           "    lea rax, [mem+" bfd bputs operand bfd bputu "]\n" bfd bputs
+           "    push rax\n"     bfd bputs
         else type OP_PUSH_STR = if*
            "    mov rax, " bfd bputs
              operand
@@ -1632,13 +1679,15 @@ in
            "\n" bfd bputs
 
            "    push rax\n"     bfd bputs
-           "    push str_"      bfd bputs
+           "    lea rax, [str_"      bfd bputs
            operand bfd bputu
-           "\n"                 bfd bputs
+           "]\n"                 bfd bputs
+           "    push rax\n"                 bfd bputs
         else type OP_PUSH_CSTR = if*
-           "    push str_"      bfd bputs
+           "    lea rax, [str_"      bfd bputs
            operand bfd bputu
-           "\n"                 bfd bputs
+           "]\n"                 bfd bputs
+           "    push rax\n"                 bfd bputs
         else type OP_IF = if*
            "    pop rax\n"       bfd bputs
            "    test rax, rax\n" bfd bputs
@@ -1681,6 +1730,46 @@ in
            "\n"                             bfd bputs
            "    mov [ret_stack_rsp], rsp\n" bfd bputs
            "    mov rsp, rax\n"             bfd bputs
+        else type OP_CALL_EXTERN = if*
+           operand sizeof(Proc) * procs +ptr
+           let prok in
+             prok Proc.ins ptr+ TypeStack.count ptr+ @int 1 -
+             while dup 0 >= do
+               dup callconv-arg-sysv-x86_64
+               let regn regs in
+                 regn 0 != if
+                   "    pop " bfd bputs
+                   regn regs bfd bputs
+                   "\n" bfd bputs
+                 end
+               end
+               1 -
+             end drop
+
+             "    mov rbx, rsp\n"             bfd bputs
+             "    mov rsp, [ret_stack_rsp]\n" bfd bputs
+             "    call "              bfd bputs
+             prok Proc.name ptr+ @Str bfd bputs
+             "\n"                     bfd bputs
+             "    mov [ret_stack_rsp], rsp\n" bfd bputs
+             "    mov rsp, rbx\n"             bfd bputs
+
+             prok Proc.outs ptr+ TypeStack.count ptr+ @int 1 -
+             while dup 0 >= do
+               dup callconv-ret-sysv-x86_64
+               let regn regs in
+                 regn 0 = if
+                   prok Proc.loc ptr+ eputloc
+                   ": ERROR: a procedure cannot return that many values according to the calling convention on Linux x86_64\n" eputs
+                   1 exit
+                 end
+                 "    push " bfd bputs
+                 regn regs bfd bputs
+                 "\n" bfd bputs
+               end
+               1 -
+             end drop
+           end
         else type OP_INLINED = if*
            // ignored
         else type OP_INTRINSIC = if*
@@ -1970,9 +2059,21 @@ in
         1 exit
       end
 
-      "format ELF64 executable 3\n"   bfd bputs
-      "segment readable executable\n" bfd bputs
+      "format ELF64\n"   bfd bputs
+      "section '.text' executable\n" bfd bputs
       bfd generate-print-intel-linux-x86_64
+
+      0 while dup procs-count @64 < do
+        dup sizeof(Proc) * procs +ptr
+        let prok in
+          prok Proc.type ptr+ @int PROC_EXTERN = if
+            "extrn "                 bfd bputs
+            prok Proc.name ptr+ @Str bfd bputs
+            "\n"                     bfd bputs
+          end
+        end
+        1 +
+      end drop
 
       0 while dup ops-count @64 < do
         dup bfd generate-op-intel-linux-x86_64
@@ -1983,11 +2084,12 @@ in
       ops-count @64 bfd bputu
       ":\n"         bfd bputs
 
-      "entry start\n"                  bfd bputs
-      "start:\n"                       bfd bputs
-      "    mov [args_ptr], rsp\n"      bfd bputs
-      "    mov rax, ret_stack_end\n"   bfd bputs
-      "    mov [ret_stack_rsp], rax\n" bfd bputs
+      "public main\n"                   bfd bputs
+      "main:\n"                         bfd bputs
+      "    lea rax, [rsi-8]\n"          bfd bputs
+      "    mov [args_ptr], rax\n"       bfd bputs
+      "    mov rax, ret_stack_end\n"    bfd bputs
+      "    mov [ret_stack_rsp], rax\n"  bfd bputs
 
       "main" proc-lookup-by-name
       let main-proc in
@@ -2004,7 +2106,7 @@ in
       "    mov rax, 60\n"           bfd bputs
       "    mov rdi, 0\n"            bfd bputs
       "    syscall\n"               bfd bputs
-      "segment readable writable\n" bfd bputs
+      "section '.data' writeable\n" bfd bputs
       0 while dup strlits-count @64 < do
         let i in
           "str_" bfd bputs
@@ -2021,7 +2123,7 @@ in
           i 1 +
         end
       end drop
-      // "segment .bss\n"           bfd bputs
+      "section '.bss' writeable\n" bfd bputs
       "args_ptr: rq 1\n"         bfd bputs
       "ret_stack_rsp: rq 1\n"    bfd bputs
       "ret_stack: rb "           bfd bputs X86_64_RET_STACK_CAP bfd bputu "\n" bfd bputs
@@ -2029,6 +2131,8 @@ in
       "mem: rb "                 bfd bputs
       global-memory-capacity @64 bfd bputu
       "\n"                       bfd bputs
+
+      "section '.note.GNU-stack' writeable\n" bfd bputs
 
       bfd bflush
       fd close drop
@@ -2383,7 +2487,7 @@ in
       end
       drop // intrinsic
     else token Token.type ptr+ @64 TOKEN_KEYWORD = if*
-      assert "Exhaustive handling of keywords in eval-const-value" COUNT_KEYWORDS 21 = end
+      assert "Exhaustive handling of keywords in eval-const-value" COUNT_KEYWORDS 23 = end
       token Token.value ptr+ @64
         dup KEYWORD_END = if
           true done !64
@@ -2549,64 +2653,77 @@ end
 proc introduce-proc
   ptr // token
   ptr // lexer
-  bool // inline
+  int // proc type
 in
-  memory inlinable sizeof(bool) end
-  inlinable !bool
-  memory lexer_ sizeof(ptr) end
-  lexer_ !ptr
-  memory token sizeof(Token) end
-  sizeof(Token) swap token memcpy drop
   memory prok sizeof(Proc) end
 
-  inside-proc @bool if
-    token Token.loc ptr+                                                             eputloc
-    ": ERROR: definition procedures inside of procedures is not allowed (for now)\n" eputs
-    procs-count @int 1 - sizeof(Proc) * procs +ptr Proc.loc ptr+                     eputloc
-    ": NOTE: the current procedure starts here\n"                                    eputs
-    1 exit
-  end
-
-  sizeof(Proc) 0 prok memset drop
-
-  inlinable @bool prok Proc.inlinable ptr+ !bool
-
-  token lexer_ @ptr lexer-next-token lnot if
-    token Token.loc ptr+ eputloc
-    ": ERROR: expected procedure name but found nothing\n" eputs
-    1 exit
-  end
-
-  token Token.type ptr+ @64 TOKEN_WORD != if
-    token Token.loc ptr+ eputloc
-    ": ERROR: expected procedure name to be a word but found " eputs
-    token Token.type ptr+ @64 HUMAN_SINGULAR human-token-type eputs
-    " instead\n" eputs
-    1 exit
-  end
-
-  sizeof(Loc) token Token.loc ptr+ prok Proc.loc ptr+ memcpy drop
-
-  token Token.value ptr+ @Str
-  token Token.loc ptr+
-  check-name-redefinition
-
-  sizeof(Str) token Token.value ptr+ prok Proc.name ptr+ memcpy drop
-
-  ops-count @64
-  dup prok Proc.addr ptr+ !64
-      parse-block-stack-push
-  OP_PREP_PROC 0 token push-op
-
-  prok
-    lexer_ @ptr over Proc.ins ptr+ parse-proc-contract-list if
-      lexer_ @ptr over Proc.outs ptr+ parse-proc-contract-list drop
+  let token lexer proc-type in
+    inside-proc @bool if
+      token Token.loc ptr+                                                             eputloc
+      ": ERROR: definition procedures inside of procedures is not allowed (for now)\n" eputs
+      procs-count @int 1 - sizeof(Proc) * procs +ptr Proc.loc ptr+                     eputloc
+      ": NOTE: the current procedure starts here\n"                                    eputs
+      1 exit
     end
-  drop
 
-  true inside-proc !bool
+    sizeof(Proc) 0 prok memset drop
 
-  prok proc-define
+    proc-type prok Proc.type ptr+ !int
+
+    token lexer lexer-next-token lnot if
+      token Token.loc ptr+ eputloc
+      ": ERROR: expected procedure name but found nothing\n" eputs
+      1 exit
+    end
+
+    token Token.type ptr+ @64 TOKEN_WORD != if
+      token Token.loc ptr+ eputloc
+      ": ERROR: expected procedure name to be a word but found " eputs
+      token Token.type ptr+ @64 HUMAN_SINGULAR human-token-type eputs
+      " instead\n" eputs
+      1 exit
+    end
+
+    sizeof(Loc) token Token.loc ptr+ prok Proc.loc ptr+ memcpy drop
+
+    token Token.value ptr+ @Str
+    token Token.loc ptr+
+    check-name-redefinition
+
+    sizeof(Str) token Token.value ptr+ prok Proc.name ptr+ memcpy drop
+
+    prok
+      lexer over Proc.ins ptr+ parse-proc-contract-list if
+        lexer over Proc.outs ptr+ parse-proc-contract-list drop
+      end
+    drop
+
+    proc-type PROC_EXTERN != if
+      ops-count @64
+      dup prok Proc.addr ptr+ !64
+          parse-block-stack-push
+      OP_PREP_PROC 0 token push-op
+
+      true inside-proc !bool
+    else
+      token lexer lexer-next-token lnot if
+        prok Proc.loc ptr+ eputloc
+        ": extern procedures must be empty\n" eputs
+        1 exit
+      end
+        token Token.type ptr+ @int TOKEN_KEYWORD !=
+        token Token.value ptr+ @int KEYWORD_END !=
+      lor if
+        token Token.loc ptr+                                            eputloc
+        ": extern procedures must be empty: expected `end` but found `" eputs
+        token Token.text ptr+ @Str                                      eputs
+        "`\n"                                                           eputs
+        1 exit
+      end
+    end
+
+    prok proc-define
+  end
 end
 
 proc inline-procedure
@@ -2911,6 +3028,24 @@ in
   end
 end
 
+const LINKFLAGS_CAP 256 end
+memory linkflags sizeof(Str) LINKFLAGS_CAP * end
+memory linkflags-count sizeof(u64) end
+
+proc push-linkflag int ptr in
+  let n s in
+    linkflags-count @64 LINKFLAGS_CAP 1 - >= if
+      here eputs ": Assertion Failed: linker flags overflow\n" eputs
+      1 exit
+    end
+
+      n s
+      linkflags-count @int sizeof(Str) * linkflags +ptr
+    !Str
+    linkflags-count inc64
+  end
+end
+
 proc compile-file-into-ops
   ptr  // file path cstr
 in
@@ -2946,7 +3081,7 @@ in
             else type @int TOKEN_KEYWORD = if*
               value @int
               let keyword in
-                assert "Exhaustive handling of keywords in compile-file-into-ops" COUNT_KEYWORDS 21 = end
+                assert "Exhaustive handling of keywords in compile-file-into-ops" COUNT_KEYWORDS 23 = end
                 keyword KEYWORD_IF = if
                   ops-count @64 parse-block-stack-push
                   OP_IF 0 token push-op
@@ -3264,9 +3399,43 @@ in
                     1 exit
                   end
 
-                  token lexer true introduce-proc
+                  token lexer PROC_INLINE introduce-proc
+                else keyword KEYWORD_EXTERN = if*
+                  token lexer lexer-next-token lnot if
+                    loc eputloc
+                    ": ERROR: expected `proc` keyword after `extern` but got nothing\n" eputs
+                    1 exit
+                  end
+
+                  type  @int TOKEN_KEYWORD =
+                  value @int KEYWORD_PROC  =
+                  land lnot if
+                    loc                                                         eputloc
+                    ": ERROR: Expected keyword `proc` after `extern` but got `" eputs
+                    token Token.text ptr+ @Str                                  eputs
+                    "`\n"                                                       eputs
+                    1 exit
+                  end
+
+                  token lexer PROC_EXTERN introduce-proc
                 else keyword KEYWORD_PROC = if*
-                  token lexer false introduce-proc
+                  token lexer PROC_NORMAL introduce-proc
+                else keyword KEYWORD_LINKFLAG = if*
+                  token lexer lexer-next-token lnot if
+                    loc eputloc
+                    ": expected linker flag but found nothing\n" eputs
+                    1 exit
+                  end
+
+                  type @int TOKEN_STR != if
+                    loc                                                eputloc
+                    ": expected linker flag to be a string but found " eputs
+                    type @int HUMAN_SINGULAR human-token-type          eputs
+                    "instead\n"                                        eputs
+                    1 exit
+                  end
+
+                  token Token.value ptr+ @Str push-linkflag
                 else keyword KEYWORD_MEMORY = if*
                   token lexer lexer-next-token lnot if
                     loc eputloc
@@ -3311,7 +3480,7 @@ in
                         current-proc
                         let prok in
                           prok NULL ptr!= if
-                            prok Proc.inlinable ptr+ @bool if
+                            prok Proc.type ptr+ @int PROC_INLINE = if
                               loc                                                                     eputloc
                               ": ERROR: local memories are not allowed in inlinable procedures yet\n" eputs
                               prok Proc.loc ptr+                                                      eputloc
@@ -3408,7 +3577,7 @@ in
               end
 
               value // token.value
-                assert "Exhaustive handling of Op types in compile-file-into-ops" COUNT_OPS 25 = end
+                assert "Exhaustive handling of Op types in compile-file-into-ops" COUNT_OPS 26 = end
                 dup @Str intrinsic-by-name if
                   OP_INTRINSIC swap token push-op
                 else drop dup @Str bind-table-lookup if*
@@ -3436,7 +3605,8 @@ in
                   token
                   push-op
                 else drop dup @Str proc-lookup-by-name dup NULL ptr!= if*
-                  dup Proc.inlinable ptr+ @bool if
+                  assert "Exhaustive handling of proc types" COUNT_PROC_TYPES 3 = end
+                  dup Proc.type ptr+ @int PROC_INLINE = if
                     current-proc
                       over over ptr= if
                         // TODO: inline recursion prevention mechanism does not detect mutual recursion
@@ -3451,11 +3621,20 @@ in
 
                     token
                     inline-procedure
-                  else
+                  else dup Proc.type ptr+ @int PROC_NORMAL = if*
                     OP_CALL
                     swap Proc.addr ptr+ @64
                     token
                     push-op
+                  else dup Proc.type ptr+ @int PROC_EXTERN = if*
+                    let prok in
+                      OP_CALL_EXTERN
+                      prok procs ptr-diff sizeof(Proc) /
+                      token push-op
+                    end
+                  else
+                    here eputs ": Unreachable\n" eputs
+                    1 exit drop
                   end
                 else drop dup @Str local-memories-lookup dup NULL ptr!= if*
                   // TODO: local memory regions can shadow the global ones
@@ -4192,7 +4371,7 @@ in
       op
       memcpy drop
 
-      assert "Exhaustive handling of Op types in type-check-program-from" COUNT_OPS 25 = end
+      assert "Exhaustive handling of Op types in type-check-program-from" COUNT_OPS 26 = end
 
       op Op.type ptr+ @int OP_PUSH_INT = if
         DATATYPE_INT
@@ -4325,6 +4504,17 @@ in
         true // continue
       else op Op.type ptr+ @int OP_RET = if*
         false // break, end of the procedure
+      else op Op.type ptr+ @int OP_CALL_EXTERN = if*
+        op Op.operand ptr+ @int sizeof(Proc) * procs +ptr
+        let prok in
+          op Op.token ptr+ // token
+          context TypeContext.stack ptr+ // stack
+          prok Proc.ins ptr+ // ins
+          prok Proc.outs ptr+ // outs
+          type-check-stack
+        end
+        context TypeContext.ip ptr+ inc64
+        true
       else op Op.type ptr+ @int OP_CALL = if*
         op Op.token ptr+
         context TypeContext.stack ptr+
@@ -4869,17 +5059,20 @@ proc type-check-program in
     dup sizeof(Proc) * procs +ptr
     prok !ptr
 
-    sizeof(TypeContext) 0 context memset drop
-    prok @ptr Proc.ins  ptr+
-    prok @ptr Proc.addr ptr+ @int
-    prok @ptr Proc.outs ptr+
-    over
-    context TypeContext.ret ptr+
-    context
+    prok @ptr Proc.type ptr+ @int PROC_EXTERN != if
 
-    type-context-from-parts
+      sizeof(TypeContext) 0 context memset drop
+      prok @ptr Proc.ins  ptr+
+      prok @ptr Proc.addr ptr+ @int
+      prok @ptr Proc.outs ptr+
+      over
+      context TypeContext.ret ptr+
+      context
 
-    type-check-program-from
+      type-context-from-parts
+
+      type-check-program-from
+    end
 
     1 +
   end drop
@@ -4891,6 +5084,7 @@ proc summary in
   "Ops count:                    " puts ops-count              @int putu "/" puts OPS_CAP             putu "\n" puts
   "Consts count:                 " puts consts-count           @int putu "/" puts CONST_CAP           putu "\n" puts
   "Procs count:                  " puts procs-count            @int putu "/" puts PROCS_CAP           putu "\n" puts
+  "Linker flags count:           " puts linkflags-count        @int putu "/" puts LINKFLAGS_CAP       putu "\n" puts
   "String literals count:        " puts strlits-count          @int putu "/" puts STRLITS_CAP         putu "\n" puts
   "String literals size (bytes): " puts strbuf-size            @int putu "/" puts STRBUF_CAP          putu "\n" puts
   "Global memories count:        " puts global-memories-count  @int putu "/" puts GLOBAL_MEMORIES_CAP putu "\n" puts
@@ -4924,6 +5118,7 @@ in
 end
 
 proc main in
+  0 include-paths-count !int
   // Default include paths
   "."     include-paths-add
   "./std" include-paths-add
@@ -5025,9 +5220,44 @@ proc main in
             tmp-append-ptr
           fpb-end
             base-file-path @Str fpb-append drop
+            ".o"                fpb-append drop
+            1                   fpb-alloc  drop
+            tmp-append-ptr
+          NULL          tmp-append-ptr
+          silent @bool lnot cmd-echoed
+        fpb-rewind
+      cmd-dev-null-stdout !bool
+
+    "[INFO] fasm" silent @bool timeit/to-here
+
+      cmd-dev-null-stdout @bool
+        silent @bool cmd-dev-null-stdout !bool
+        fpb-end
+          tmp-end
+          "cc"c            tmp-append-ptr
+          "-o"c            tmp-append-ptr
+          fpb-end
+            base-file-path @Str fpb-append drop
             ".tmp"              fpb-append drop
             1                   fpb-alloc  drop
             tmp-append-ptr
+          fpb-end
+            base-file-path @Str fpb-append drop
+            ".o"                fpb-append drop
+            1                   fpb-alloc  drop
+            tmp-append-ptr
+          "-no-pie"c       tmp-append-ptr
+          //"-nostartfiles"c tmp-append-ptr
+          "-lc"c           tmp-append-ptr
+          0 while dup linkflags-count @64 < do
+            let i in
+              fpb-end
+                i sizeof(Str) * linkflags +ptr @Str fpb-append drop
+                1                                   fpb-alloc  drop
+                tmp-append-ptr
+              i 1 +
+            end
+          end drop
           NULL          tmp-append-ptr
           silent @bool lnot cmd-echoed
         fpb-rewind
@@ -5068,7 +5298,7 @@ proc main in
         NULL          tmp-append-ptr
         silent @bool lnot cmd-echoed
       fpb-rewind
-    "[INFO] fasm" silent @bool timeit/to-here
+    "[INFO] Linking" silent @bool timeit/to-here
 
     run @bool if
       tmp-end
