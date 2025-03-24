@@ -80,12 +80,22 @@ First you will need to install [fasm](https://flatassembler.net/) and make sure 
 
 ```console
 $ fasm -m 524288 ./bootstrap/porth-linux-x86_64.fasm
-$ cc -o ./bootstrap/porth-linux-x86_64 ./bootstrap/porth-linux-x86_64.o -no-pie -lc
+$ cc -no-pie -o ./bootstrap/porth-linux-x86_64 ./bootstrap/porth-linux-x86_64.o
 $ ./bootstrap/porth-linux-x86_64 com ./porth.porth
 $ ./porth com ./porth.porth
 $ ./porth com ./porth.porth
 $ ./porth com ./porth.porth
 ...
+```
+
+Alternatively you can use GNU as
+
+```console
+$ as -o ./bootstrap/porth-linux-x86_64.o ./bootstrap/porth-linux-x86_64.s
+$ cc -no-pie -o ./bootstrap/porth-linux-x86_64 ./bootstrap/porth-linux-x86_64.o
+$ ./bootstrap/porth-linux-x86_64 com -g ./porth.porth
+$ ./porth com -g ./porth.porth
+$ ./porth com -g ./porth.porth
 ```
 
 ### Compilation

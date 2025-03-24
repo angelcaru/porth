@@ -1487,6 +1487,8 @@ in
   end
 end
 
+memory use-gas sizeof(bool) end
+
 proc generate-print-intel-linux-x86_64
   ptr // bfd
 in
@@ -1494,7 +1496,12 @@ in
     "print:\n"                               bfd bputs
     "    mov     r9, -3689348814741910323\n" bfd bputs
     "    sub     rsp, 40\n"                  bfd bputs
-    "    mov     BYTE [rsp+31], 10\n"        bfd bputs
+    use-gas @bool if
+      // GAS is drunk lmaooo
+      "    movb    BYTE [rsp+30], 10\n"        bfd bputs
+    else
+      "    mov     BYTE [rsp+31], 10\n"        bfd bputs
+    end
     "    lea     rcx, [rsp+30]\n"            bfd bputs
     ".L2:\n"                                 bfd bputs
     "    mov     rax, rdi\n"                 bfd bputs
@@ -1507,7 +1514,15 @@ in
     "    add     rsi, rsi\n"                 bfd bputs
     "    sub     rax, rsi\n"                 bfd bputs
     "    add     eax, 48\n"                  bfd bputs
-    "    mov     BYTE [rcx], al\n"           bfd bputs
+    use-gas @bool if
+      // GAS doesn't know how to assemble this instruction properly for some reason
+      // It assembles it into "mov BYTE PTR [rcx+0x1], al"
+      //
+      // Wildest workaround I've ever done
+      "    .byte 0x88, 0x01\n" bfd bputs
+    else
+      "    mov     BYTE [rcx], al\n"           bfd bputs
+    end
     "    mov     rax, rdi\n"                 bfd bputs
     "    mov     rdi, rdx\n"                 bfd bputs
     "    mov     rdx, rcx\n"                 bfd bputs
@@ -1533,7 +1548,10 @@ proc generate-op-comment ptr ptr in
     op Op.operand ptr+ @int
     op Op.token   ptr+
     let type operand token in
-      " ;; "                   bfd bputs
+      // NOTE: ;;// makes the comment compatible with both fasm and gas
+      // In fasm this is treated as ';' which starts the comment, and then ';//' is the comment
+      // In gas this is treated as ';;', which are two empty statements, and then '//' which starts an empty comment
+      " ;;// "                 bfd bputs
       token Token.loc ptr+     bfd bputloc
       ": "                     bfd bputs
       type op-type-as-str      bfd bputs
@@ -1602,7 +1620,7 @@ in
            "    mov rax, "   bfd bputs operand bfd bputu "\n" bfd bputs
            "    push rax\n"  bfd bputs
         else type OP_PUSH_ADDR = if*
-           "    mov rax, addr_" bfd bputs operand bfd bputu "\n" bfd bputs
+           "    lea rax, [addr_" bfd bputs operand bfd bputu "]\n" bfd bputs
            "    push rax\n"     bfd bputs
         else type OP_CALL_LIKE = if*
            "    pop rbx\n"                  bfd bputs
@@ -1659,7 +1677,8 @@ in
            "    add rax, "                  bfd bputs
            operand 8 *      bfd bputu
            "\n"                             bfd bputs
-           "    push QWORD [rax]\n"         bfd bputs
+           "    mov rbx, [rax]\n"           bfd bputs
+           "    push rbx\n"                 bfd bputs
         else type OP_PUSH_LOCAL_MEM = if*
            "    mov rax, [ret_stack_rsp]\n" bfd bputs
            "    add rax, "                  bfd bputs
@@ -2026,6 +2045,187 @@ in
           1 exit
         end
       end
+    end
+  end
+end
+
+const GAS_FILE_PATHS_CAP 256 end
+memory gas-file-paths sizeof(Str) GAS_FILE_PATHS_CAP * end
+memory gas-file-paths-count sizeof(int) end
+
+proc push-gas-file-path int ptr -- int in
+  gas-file-paths-count @int 1 + GAS_FILE_PATHS_CAP >= if
+    here eputs ": Assertion Failed: GAS file paths overflow\n" eputs
+    1 exit
+  end
+
+  gas-file-paths-count @int
+  let count in
+    count sizeof(Str) * gas-file-paths +ptr !Str
+    count 1 + gas-file-paths-count !int
+    count
+  end
+end
+
+proc find-gas-file-path
+  int ptr // file path
+  --
+  int // index
+  bool // is new?
+in
+  memory not-found sizeof(bool) end
+
+  gas-file-paths-count @int 0 = if
+    push-gas-file-path
+    true
+  else
+    let n s in
+      true not-found !bool
+      0 while dup gas-file-paths-count @int < not-found @bool land do
+        let i in
+          i sizeof(Str) * gas-file-paths +ptr @Str
+          n s streq lnot not-found !bool
+          i 1 +
+        end
+      end
+
+      not-found @bool if
+        drop
+        n s push-gas-file-path
+      else
+        1 -
+      end
+
+      not-found @bool
+    end
+  end
+end
+
+proc generate-gas-linux-x86_64
+  ptr // file-path
+in
+  memory bfd sizeof(Bfd) end
+  sizeof(Bfd) 0 bfd memset drop
+
+  let file-path in
+    silent @bool lnot if
+      "[INFO] Generating "       puts
+      file-path cstr-to-str puts
+      "\n"                       puts
+    end
+
+    420                            // mode
+    O_CREAT O_WRONLY or O_TRUNC or // flags
+    file-path                      // pathname
+    AT_FDCWD
+    openat
+
+    BFD_CAP tmp-alloc
+    let fd buff in
+      fd   bfd Bfd.fd  ptr+ !int
+      buff bfd Bfd.buff ptr+ !ptr
+
+      fd 0 < if
+        "[ERROR] could not open `output.asm`\n" eputs
+        1 exit
+      end
+
+      ".intel_syntax noprefix\n" bfd bputs
+      ".text\n" bfd bputs
+      bfd generate-print-intel-linux-x86_64
+
+      0 while dup procs-count @64 < do
+        dup sizeof(Proc) * procs +ptr
+        let prok in
+          prok Proc.type ptr+ @int PROC_EXTERN = if
+            ".extern "                      bfd bputs
+            prok Proc.extern-name ptr+ @Str bfd bputs
+            "\n"                            bfd bputs
+          end
+        end
+        1 +
+      end drop
+
+      0 while dup ops-count @64 < do
+        let i in
+          i sizeof(Op) * ops +ptr Op.token ptr+ Token.loc ptr+
+          let loc in
+            loc Loc.file-path ptr+ @Str find-gas-file-path if
+              ".file "                    bfd bputs
+              dup                         bfd bputu
+              " \""                       bfd bputs
+              loc Loc.file-path ptr+ @Str bfd bputs
+              "\"\n"                      bfd bputs
+            end
+            ".loc "               bfd bputs
+                                  bfd bputu
+            " "                   bfd bputs
+            loc Loc.row ptr+ @int bfd bputu
+            " "                   bfd bputs
+            loc Loc.col ptr+ @int bfd bputu
+            "\n"                  bfd bputs
+          end
+          i bfd generate-op-intel-linux-x86_64
+          i 1 +
+        end
+      end drop
+
+      "addr_"       bfd bputs
+      ops-count @64 bfd bputu
+      ":\n"         bfd bputs
+
+      ".global main\n"                  bfd bputs
+      "main:\n"                         bfd bputs
+      "    lea rax, [rsi-8]\n"          bfd bputs
+      "    mov [args_ptr], rax\n"       bfd bputs
+      "    lea rax, [ret_stack+"        bfd bputs X86_64_RET_STACK_CAP bfd bputu "]\n" bfd bputs
+      "    mov [ret_stack_rsp], rax\n"  bfd bputs
+
+      "main" proc-lookup-by-name
+      let main-proc in
+        main-proc NULL ptr= if
+          here eputs ": Assertion Failed: type checking phase did not check the existence of `main` procedure" eputs
+          1 exit
+        end
+
+        "    call addr_"              bfd bputs
+        main-proc Proc.addr ptr+ @int bfd bputu
+        "\n"                          bfd bputs
+      end
+
+      "    mov rax, 60\n"           bfd bputs
+      "    mov rdi, 0\n"            bfd bputs
+      "    syscall\n"               bfd bputs
+      ".data\n" bfd bputs
+      0 while dup strlits-count @64 < do
+        let i in
+          "str_" bfd bputs
+          i      bfd bputu
+          ":"    bfd bputs
+          i sizeof(Str) * strlits +ptr
+          let str in
+            str ?str-empty lnot if
+              " .byte "   bfd bputs
+              str @Str bfd bputdecstr
+            end
+          end
+          "\n" bfd bputs
+          i 1 +
+        end
+      end drop
+      ".bss\n" bfd bputs
+      ".comm args_ptr, 8\n"      bfd bputs
+      ".comm ret_stack_rsp, 8\n" bfd bputs
+      ".comm ret_stack, "        bfd bputs X86_64_RET_STACK_CAP bfd bputu "\n" bfd bputs
+      ".comm mem, "              bfd bputs
+      global-memory-capacity @64 bfd bputu
+      "\n"                       bfd bputs
+
+      ".section .note.GNU-stack\n" bfd bputs
+
+      bfd bflush
+      fd close drop
+      buff tmp-rewind
     end
   end
 end
@@ -5125,6 +5325,8 @@ in
     "    com [OPTIONS] <file>  Compile the program\n"                                          fd fputs
     "      OPTIONS:\n"                                                                         fd fputs
     // TODO: implement -o flag for com subcommand
+    "        -g                  Use GNU as instead of fasm\n"                                 fd fputs
+    "                              (GNU as can generate line number info, fasm can't)\n"       fd fputs
     "        -r                  Run the program after successful compilation\n"               fd fputs
     "        -s                  Silent mode. Don't print any info about compilation phases\n" fd fputs
     "    dump <file>           Dump the ops of the program\n"                                  fd fputs
@@ -5198,6 +5400,9 @@ proc main in
       args sizeof(ptr) inc64-by
       args @@ptr NULL ptr= if
         false // break
+      else args @@ptr "-g"c cstreq if*
+        true use-gas !bool
+        true  // continue
       else args @@ptr "-r"c cstreq if*
         true run !bool
         true  // continue
@@ -5227,7 +5432,7 @@ proc main in
         base-file-path @Str fpb-append drop
         ".asm"              fpb-append drop
         1                   fpb-alloc  drop
-        dup generate-fasm-linux-x86_64
+        dup use-gas @bool if generate-gas-linux-x86_64 else generate-fasm-linux-x86_64 end
       fpb-rewind
     "[INFO] Generation" silent @bool timeit/to-here
 
@@ -5236,25 +5441,42 @@ proc main in
         silent @bool cmd-dev-null-stdout !bool
         fpb-end
           tmp-end
-          "fasm"c       tmp-append-ptr
-          "-m"c         tmp-append-ptr
-          "524288"c     tmp-append-ptr
-          fpb-end
-            base-file-path @Str fpb-append drop
-            ".asm"              fpb-append drop
-            1                   fpb-alloc  drop
-            tmp-append-ptr
-          fpb-end
-            base-file-path @Str fpb-append drop
-            ".o"                fpb-append drop
-            1                   fpb-alloc  drop
-            tmp-append-ptr
-          NULL          tmp-append-ptr
+          use-gas @bool if
+            "as"c tmp-append-ptr
+            "-g"c tmp-append-ptr
+            "-o"c tmp-append-ptr
+            fpb-end
+              base-file-path @Str fpb-append drop
+              ".o"                fpb-append drop
+              1                   fpb-alloc  drop
+              tmp-append-ptr
+            fpb-end
+              base-file-path @Str fpb-append drop
+              ".asm"              fpb-append drop
+              1                   fpb-alloc  drop
+              tmp-append-ptr
+            NULL          tmp-append-ptr
+          else
+            "fasm"c       tmp-append-ptr
+            "-m"c         tmp-append-ptr
+            "524288"c     tmp-append-ptr
+            fpb-end
+              base-file-path @Str fpb-append drop
+              ".asm"              fpb-append drop
+              1                   fpb-alloc  drop
+              tmp-append-ptr
+            fpb-end
+              base-file-path @Str fpb-append drop
+              ".o"                fpb-append drop
+              1                   fpb-alloc  drop
+              tmp-append-ptr
+            NULL          tmp-append-ptr
+          end
           silent @bool lnot cmd-echoed
         fpb-rewind
       cmd-dev-null-stdout !bool
 
-    "[INFO] fasm" silent @bool timeit/to-here
+    use-gas @bool if "[INFO] gas" else "[INFO] fasm" end silent @bool timeit/to-here
 
       cmd-dev-null-stdout @bool
         silent @bool cmd-dev-null-stdout !bool
