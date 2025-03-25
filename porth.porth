@@ -632,12 +632,20 @@ end
 /// BEGIN Intrinsics //////////////////////////////
 /// Intrinsics are built-in function of the language with the hardcoded implementation.
 const INTRINSIC_PLUS        1 offset end
-const INTRINSIC_F32_PLUS    1 offset end
-const INTRINSIC_F64_PLUS    1 offset end
 const INTRINSIC_MINUS       1 offset end
 const INTRINSIC_MUL         1 offset end
 const INTRINSIC_DIVMOD      1 offset end
 const INTRINSIC_IDIVMOD     1 offset end
+
+const INTRINSIC_F32_PLUS    1 offset end
+const INTRINSIC_F64_PLUS    1 offset end
+const INTRINSIC_F32_MINUS   1 offset end
+const INTRINSIC_F64_MINUS   1 offset end
+const INTRINSIC_F32_MUL     1 offset end
+const INTRINSIC_F64_MUL     1 offset end
+const INTRINSIC_F32_DIV     1 offset end
+const INTRINSIC_F64_DIV     1 offset end
+
 const INTRINSIC_MAX         1 offset end
 const INTRINSIC_EQ          1 offset end
 const INTRINSIC_GT          1 offset end
@@ -645,6 +653,22 @@ const INTRINSIC_LT          1 offset end
 const INTRINSIC_GE          1 offset end
 const INTRINSIC_LE          1 offset end
 const INTRINSIC_NE          1 offset end
+
+const INTRINSIC_F32_MAX         1 offset end
+const INTRINSIC_F64_MAX         1 offset end
+const INTRINSIC_F32_EQ          1 offset end
+const INTRINSIC_F64_EQ          1 offset end
+const INTRINSIC_F32_GT          1 offset end
+const INTRINSIC_F64_GT          1 offset end
+const INTRINSIC_F32_LT          1 offset end
+const INTRINSIC_F64_LT          1 offset end
+const INTRINSIC_F32_GE          1 offset end
+const INTRINSIC_F64_GE          1 offset end
+const INTRINSIC_F32_LE          1 offset end
+const INTRINSIC_F64_LE          1 offset end
+const INTRINSIC_F32_NE          1 offset end
+const INTRINSIC_F64_NE          1 offset end
+
 const INTRINSIC_SHR         1 offset end
 const INTRINSIC_SHL         1 offset end
 const INTRINSIC_OR          1 offset end
@@ -693,22 +717,47 @@ proc intrinsic-name
   --
   int ptr // name
 in
-  assert "Exhaustive handling of Intrinsics in intrinsic-name" COUNT_INTRINSICS 54 = end
+  assert "Exhaustive handling of Intrinsics in intrinsic-name" COUNT_INTRINSICS 74 = end
        dup INTRINSIC_PLUS        = if  drop "+"
-  else dup INTRINSIC_F32_PLUS    = if* drop "+."
-  else dup INTRINSIC_F64_PLUS    = if* drop "+:"
   else dup INTRINSIC_MINUS       = if* drop "-"
   else dup INTRINSIC_MUL         = if* drop "*"
   else dup INTRINSIC_DIVMOD      = if* drop "divmod"
   else dup INTRINSIC_IDIVMOD     = if* drop "idivmod"
-  else dup INTRINSIC_MAX         = if* drop "max"
+
+  else dup INTRINSIC_F32_PLUS    = if* drop "+."
+  else dup INTRINSIC_F64_PLUS    = if* drop "+:"
+  else dup INTRINSIC_F32_MINUS   = if* drop "-."
+  else dup INTRINSIC_F64_MINUS   = if* drop "-:"
+  else dup INTRINSIC_F32_MUL     = if* drop "*."
+  else dup INTRINSIC_F64_MUL     = if* drop "*:"
+  else dup INTRINSIC_F32_DIV     = if* drop "/."
+  else dup INTRINSIC_F64_DIV     = if* drop "/:"
+
   else dup INTRINSIC_PRINT       = if* drop "print"
+
+  else dup INTRINSIC_MAX         = if* drop "max"
   else dup INTRINSIC_EQ          = if* drop "="
   else dup INTRINSIC_GT          = if* drop ">"
   else dup INTRINSIC_LT          = if* drop "<"
   else dup INTRINSIC_GE          = if* drop ">="
   else dup INTRINSIC_LE          = if* drop "<="
   else dup INTRINSIC_NE          = if* drop "!="
+
+  else dup INTRINSIC_F32_MAX     = if* drop "max."
+  else dup INTRINSIC_F64_MAX     = if* drop "max:"
+  else dup INTRINSIC_F32_EQ      = if* drop "=."
+  else dup INTRINSIC_F64_EQ      = if* drop "=:"
+  else dup INTRINSIC_F32_GT      = if* drop ">."
+  else dup INTRINSIC_F64_GT      = if* drop ">:"
+  else dup INTRINSIC_F32_LT      = if* drop "<."
+  else dup INTRINSIC_F64_LT      = if* drop "<:"
+  else dup INTRINSIC_F32_GE      = if* drop ">=."
+  else dup INTRINSIC_F64_GE      = if* drop ">=:"
+  else dup INTRINSIC_F32_LE      = if* drop "<=."
+  else dup INTRINSIC_F64_LE      = if* drop "<=:"
+  else dup INTRINSIC_F32_NE      = if* drop "!=."
+  else dup INTRINSIC_F64_NE      = if* drop "!=:"
+
   else dup INTRINSIC_SHR         = if* drop "shr"
   else dup INTRINSIC_SHL         = if* drop "shl"
   else dup INTRINSIC_OR          = if* drop "or"
@@ -764,22 +813,47 @@ in
   memory name sizeof(Str) end
   name !Str
   true
-  assert "Exhaustive handling of Intrinsics in intrinsic-by-name" COUNT_INTRINSICS 54 = end
+  assert "Exhaustive handling of Intrinsics in intrinsic-by-name" COUNT_INTRINSICS 74 = end
        name @Str "+"            streq if  INTRINSIC_PLUS
-  else name @Str "+."           streq if* INTRINSIC_F32_PLUS
-  else name @Str "+:"           streq if* INTRINSIC_F64_PLUS
   else name @Str "-"            streq if* INTRINSIC_MINUS
   else name @Str "*"            streq if* INTRINSIC_MUL
   else name @Str "divmod"       streq if* INTRINSIC_DIVMOD
   else name @Str "idivmod"      streq if* INTRINSIC_IDIVMOD
-  else name @Str "max"          streq if* INTRINSIC_MAX
+
+  else name @Str "+."           streq if* INTRINSIC_F32_PLUS
+  else name @Str "+:"           streq if* INTRINSIC_F64_PLUS
+  else name @Str "-."           streq if* INTRINSIC_F32_MINUS
+  else name @Str "-:"           streq if* INTRINSIC_F64_MINUS
+  else name @Str "*."           streq if* INTRINSIC_F32_MUL
+  else name @Str "*:"           streq if* INTRINSIC_F64_MUL
+  else name @Str "/."           streq if* INTRINSIC_F32_DIV
+  else name @Str "/:"           streq if* INTRINSIC_F64_DIV
+
   else name @Str "print"        streq if* INTRINSIC_PRINT
+
+  else name @Str "max"          streq if* INTRINSIC_MAX
   else name @Str "="            streq if* INTRINSIC_EQ
   else name @Str ">"            streq if* INTRINSIC_GT
   else name @Str "<"            streq if* INTRINSIC_LT
   else name @Str ">="           streq if* INTRINSIC_GE
   else name @Str "<="           streq if* INTRINSIC_LE
   else name @Str "!="           streq if* INTRINSIC_NE
+
+  else name @Str "max."         streq if* INTRINSIC_F32_MAX
+  else name @Str "max:"         streq if* INTRINSIC_F64_MAX
+  else name @Str "=."           streq if* INTRINSIC_F32_EQ
+  else name @Str "=:"           streq if* INTRINSIC_F64_EQ
+  else name @Str ">."           streq if* INTRINSIC_F32_GT
+  else name @Str ">:"           streq if* INTRINSIC_F64_GT
+  else name @Str "<."           streq if* INTRINSIC_F32_LT
+  else name @Str "<:"           streq if* INTRINSIC_F64_LT
+  else name @Str ">=."          streq if* INTRINSIC_F32_GE
+  else name @Str ">=:"          streq if* INTRINSIC_F64_GE
+  else name @Str "<=."          streq if* INTRINSIC_F32_LE
+  else name @Str "<=:"          streq if* INTRINSIC_F64_LE
+  else name @Str "!=."          streq if* INTRINSIC_F32_NE
+  else name @Str "!=:"          streq if* INTRINSIC_F64_NE
+
   else name @Str "shr"          streq if* INTRINSIC_SHR
   else name @Str "shl"          streq if* INTRINSIC_SHL
   else name @Str "or"           streq if* INTRINSIC_OR
@@ -1833,7 +1907,7 @@ in
            // ignored
         else type OP_INTRINSIC = if*
             assert "Exhaustive handling of Intrinsics in generate-op-intel-linux-x86_64"
-              COUNT_INTRINSICS 54 =
+              COUNT_INTRINSICS 74 =
             end
 
             operand INTRINSIC_PLUS = if
@@ -1862,10 +1936,42 @@ in
                 "    pop rbx\n"             bfd bputs
                 "    sub rbx, rax\n"        bfd bputs
                 "    push rbx\n"            bfd bputs
+            else operand INTRINSIC_F32_MINUS = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    subss xmm0, xmm1\n"    bfd bputs
+                "    movd eax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F64_MINUS = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    subsd xmm0, xmm1\n"    bfd bputs
+                "    movq rax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
             else operand INTRINSIC_MUL = if*
                 "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    mul rbx\n"             bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F32_MUL = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    mulss xmm0, xmm1\n"    bfd bputs
+                "    movd eax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F64_MUL = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    mulsd xmm0, xmm1\n"    bfd bputs
+                "    movq rax, xmm0\n"      bfd bputs
                 "    push rax\n"            bfd bputs
             else operand INTRINSIC_DIVMOD = if*
                 "    xor rdx, rdx\n"        bfd bputs
@@ -1881,11 +1987,43 @@ in
                 "    idiv rbx\n"            bfd bputs
                 "    push rax\n"            bfd bputs
                 "    push rdx\n"            bfd bputs
+            else operand INTRINSIC_F32_DIV = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    divss xmm0, xmm1\n"    bfd bputs
+                "    movd eax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F64_DIV = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    divsd xmm0, xmm1\n"    bfd bputs
+                "    movq rax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
             else operand INTRINSIC_MAX = if*
                 "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    cmp rbx, rax\n"        bfd bputs
                 "    cmovge rax, rbx\n"     bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F32_MAX = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    maxss xmm0, xmm1\n"    bfd bputs
+                "    movd eax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F64_MAX = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    maxsd xmm0, xmm1\n"    bfd bputs
+                "    movq rax, xmm0\n"      bfd bputs
                 "    push rax\n"            bfd bputs
             else operand INTRINSIC_SHR = if*
                 "    pop rcx\n"             bfd bputs
@@ -1912,25 +2050,25 @@ in
                 "    not rax\n"             bfd bputs
                 "    push rax\n"            bfd bputs
             else operand INTRINSIC_INT2FLOAT = if*
-                "    pop rax\n"             bfd bputs
-                "    cvtsi2ss xmm1, rax\n"  bfd bputs
-                "    movd eax, xmm1\n"      bfd bputs
-                "    push rax\n"            bfd bputs
+                "    pop rax\n" bfd bputs
+                "    cvtsi2ss xmm0, rax\n" bfd bputs
+                "    movd eax, xmm0\n" bfd bputs
+                "    push rax\n" bfd bputs
             else operand INTRINSIC_FLOAT2INT = if*
-                "    pop rax\n"             bfd bputs
-                "    movd xmm1, eax\n"      bfd bputs
-                "    cvtss2si eax, xmm1\n"  bfd bputs
-                "    push rax\n"            bfd bputs
+                "    pop rax\n" bfd bputs
+                "    movd xmm0, eax\n" bfd bputs
+                "    cvtss2si rax, xmm0\n" bfd bputs
+                "    push rax\n" bfd bputs
             else operand INTRINSIC_INT2DOUBLE = if*
-                "    pop rax\n"             bfd bputs
-                "    cvtsi2sd xmm1, rax\n"  bfd bputs
-                "    movq rax, xmm1\n"      bfd bputs
-                "    push rax\n"            bfd bputs
+                "    pop rax\n" bfd bputs
+                "    cvtsi2sd xmm0, rax\n" bfd bputs
+                "    movq rax, xmm0\n" bfd bputs
+                "    push rax\n" bfd bputs
             else operand INTRINSIC_DOUBLE2INT = if*
-                "    pop rax\n"             bfd bputs
-                "    movq xmm1, rax\n"      bfd bputs
-                "    cvtsd2si rax, xmm1\n"  bfd bputs
-                "    push rax\n"            bfd bputs
+                "    pop rax\n" bfd bputs
+                "    movq xmm0, rax\n" bfd bputs
+                "    cvtsd2si rax, xmm0\n" bfd bputs
+                "    push rax\n" bfd bputs
             else operand INTRINSIC_PRINT = if*
                 "    pop rdi\n"             bfd bputs
                 "    call print\n"          bfd bputs
@@ -1942,12 +2080,52 @@ in
                 "    cmp rax, rbx\n"        bfd bputs
                 "    cmove rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F32_EQ = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    comiss xmm0, xmm1\n"     bfd bputs
+                "    cmove rcx, rdx\n"      bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F64_EQ = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    comisd xmm0, xmm1\n"     bfd bputs
+                "    cmove rcx, rdx\n"      bfd bputs
+                "    push rcx\n"            bfd bputs
             else operand INTRINSIC_GT = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    pop rax\n"             bfd bputs
                 "    cmp rax, rbx\n"        bfd bputs
+                "    cmovg rcx, rdx\n"      bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F32_GT = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    comiss xmm0, xmm1\n"   bfd bputs
+                "    cmovg rcx, rdx\n"      bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F64_GT = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    comisd xmm0, xmm1\n"   bfd bputs
                 "    cmovg rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_LT = if*
@@ -1958,12 +2136,52 @@ in
                 "    cmp rax, rbx\n"        bfd bputs
                 "    cmovl rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F32_LT = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    comiss xmm0, xmm1\n"   bfd bputs
+                "    cmovl rcx, rdx\n"      bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F64_LT = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    comisd xmm0, xmm1\n"   bfd bputs
+                "    cmovl rcx, rdx\n"      bfd bputs
+                "    push rcx\n"            bfd bputs
             else operand INTRINSIC_GE = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    pop rax\n"             bfd bputs
                 "    cmp rax, rbx\n"        bfd bputs
+                "    cmovge rcx, rdx\n"     bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F32_GE = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    comiss xmm0, xmm1\n"   bfd bputs
+                "    cmovge rcx, rdx\n"     bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F64_GE = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    comisd xmm0, xmm1\n"   bfd bputs
                 "    cmovge rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_LE = if*
@@ -1974,12 +2192,52 @@ in
                 "    cmp rax, rbx\n"        bfd bputs
                 "    cmovle rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F32_LE = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    comiss xmm0, xmm1\n"   bfd bputs
+                "    cmovle rcx, rdx\n"     bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F64_LE = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    comisd xmm0, xmm1\n"   bfd bputs
+                "    cmovle rcx, rdx\n"     bfd bputs
+                "    push rcx\n"            bfd bputs
             else operand INTRINSIC_NE = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    pop rax\n"             bfd bputs
                 "    cmp rax, rbx\n"        bfd bputs
+                "    cmovne rcx, rdx\n"     bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F32_NE = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    comiss xmm0, xmm1\n"   bfd bputs
+                "    cmovne rcx, rdx\n"     bfd bputs
+                "    push rcx\n"            bfd bputs
+            else operand INTRINSIC_F64_NE = if*
+                "    mov rcx, 0\n"          bfd bputs
+                "    mov rdx, 1\n"          bfd bputs
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    comisd xmm0, xmm1\n"   bfd bputs
                 "    cmovne rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_DUP = if*
@@ -4367,15 +4625,11 @@ in
   let token stack datatype in
     memory ins sizeof(TypeStack) end
     sizeof(TypeStack) 0 ins memset drop
-
     datatype token Token.loc ptr+ ins type-stack-push
     datatype token Token.loc ptr+ ins type-stack-push
-
     memory outs sizeof(TypeStack) end
     sizeof(TypeStack) 0 outs memset drop
-
     datatype token Token.loc ptr+ outs type-stack-push
-
     token stack ins outs type-check-stack
   end
 end
@@ -4463,22 +4717,21 @@ in
   ins outs type-check-stack
 end
 
-proc type-check-cmp-int-operator
+proc type-check-cmp-operator
   ptr // token
   ptr // stack
+  int // datatype
 in
-  memory ins sizeof(TypeStack) end
-  sizeof(TypeStack) 0 ins memset drop
-  over
-    DATATYPE_INT over Token.loc ptr+ ins type-stack-push
-    DATATYPE_INT over Token.loc ptr+ ins type-stack-push
-  drop
-  memory outs sizeof(TypeStack) end
-  sizeof(TypeStack) 0 outs memset drop
-  over
-    DATATYPE_BOOL over Token.loc ptr+ outs type-stack-push
-  drop
-  ins outs type-check-stack
+  let token stack datatype in
+    memory ins sizeof(TypeStack) end
+    sizeof(TypeStack) 0 ins memset drop
+    datatype token Token.loc ptr+ ins type-stack-push
+    datatype token Token.loc ptr+ ins type-stack-push
+    memory outs sizeof(TypeStack) end
+    sizeof(TypeStack) 0 outs memset drop
+    DATATYPE_BOOL token Token.loc ptr+ outs type-stack-push
+    token stack ins outs type-check-stack
+  end
 end
 
 proc type-check-divmod-operator
@@ -4986,15 +5239,11 @@ in
         // else branch
         false // break
       else op Op.type ptr+ @int OP_INTRINSIC = if*
-        assert "Exhaustive handling of Intrinsics in type-check-program-from" COUNT_INTRINSICS 54 = end
+        assert "Exhaustive handling of Intrinsics in type-check-program-from" COUNT_INTRINSICS 74 = end
 
         op Op.operand ptr+ @int
           dup INTRINSIC_PLUS = if
             op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
-          else dup INTRINSIC_F32_PLUS = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
-          else dup INTRINSIC_F64_PLUS = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
           else dup INTRINSIC_MINUS = if*
             op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_MUL = if*
@@ -5003,20 +5252,68 @@ in
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-divmod-operator
           else dup INTRINSIC_IDIVMOD = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-divmod-operator
+
+          else dup INTRINSIC_F32_PLUS = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
+          else dup INTRINSIC_F64_PLUS = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
+          else dup INTRINSIC_F32_MINUS = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
+          else dup INTRINSIC_F64_MINUS = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
+          else dup INTRINSIC_F32_MUL = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
+          else dup INTRINSIC_F64_MUL = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
+          else dup INTRINSIC_F32_DIV = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
+          else dup INTRINSIC_F64_DIV = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
+
           else dup INTRINSIC_MAX = if*
             op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_EQ = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-cmp-operator
           else dup INTRINSIC_GT = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-cmp-operator
           else dup INTRINSIC_LT = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-cmp-operator
           else dup INTRINSIC_GE = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-cmp-operator
           else dup INTRINSIC_LE = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-cmp-operator
           else dup INTRINSIC_NE = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-cmp-operator
+
+          else dup INTRINSIC_F32_MAX = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
+          else dup INTRINSIC_F64_MAX = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
+          else dup INTRINSIC_F32_EQ = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-cmp-operator
+          else dup INTRINSIC_F64_EQ = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-cmp-operator
+          else dup INTRINSIC_F32_GT = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-cmp-operator
+          else dup INTRINSIC_F64_GT = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-cmp-operator
+          else dup INTRINSIC_F32_LT = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-cmp-operator
+          else dup INTRINSIC_F64_LT = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-cmp-operator
+          else dup INTRINSIC_F32_GE = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-cmp-operator
+          else dup INTRINSIC_F64_GE = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-cmp-operator
+          else dup INTRINSIC_F32_LE = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-cmp-operator
+          else dup INTRINSIC_F64_LE = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-cmp-operator
+          else dup INTRINSIC_F32_NE = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-cmp-operator
+          else dup INTRINSIC_F64_NE = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-cmp-operator
+
           else dup INTRINSIC_SHR = if*
             op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_SHL = if*
