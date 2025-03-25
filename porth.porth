@@ -2636,6 +2636,22 @@ in
           swap
           *
           DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_SHL = if*
+          2 token const-expect-arity
+          // TODO: `*` intrinsic ignores the types in compile time evaluation
+          const-stack-pop swap drop
+          const-stack-pop swap drop
+          swap
+          shl
+          DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_SHR = if*
+          2 token const-expect-arity
+          // TODO: `*` intrinsic ignores the types in compile time evaluation
+          const-stack-pop swap drop
+          const-stack-pop swap drop
+          swap
+          shr
+          DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_EQ = if*
           2 token const-expect-arity
           // TODO: `=` intrinsic ignores the types in compile time evaluation
