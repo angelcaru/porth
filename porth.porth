@@ -509,10 +509,12 @@ end
 /// END Lexer //////////////////////////////
 
 /// BEGIN DataType //////////////////////////////
-const DATATYPE_INT  1 offset end
-const DATATYPE_PTR  1 offset end
-const DATATYPE_BOOL 1 offset end
-const DATATYPE_ADDR 1 offset end
+const DATATYPE_INT    1 offset end
+const DATATYPE_FLOAT  1 offset end
+const DATATYPE_DOUBLE 1 offset end
+const DATATYPE_PTR    1 offset end
+const DATATYPE_BOOL   1 offset end
+const DATATYPE_ADDR   1 offset end
 const COUNT_DATATYPES  reset end
 
 const HUMAN_SINGULAR 1 offset end
@@ -596,11 +598,13 @@ proc datatype-by-name
 in
   memory name sizeof(Str) end
   name !Str
-  assert "Exhaustive handling of data types in datatype-by-name" COUNT_DATATYPES 4 = end
-       name @Str "ptr"  streq if  DATATYPE_PTR  true
-  else name @Str "bool" streq if* DATATYPE_BOOL true
-  else name @Str "int"  streq if* DATATYPE_INT  true
-  else name @Str "addr" streq if* DATATYPE_ADDR true
+  assert "Exhaustive handling of data types in datatype-by-name" COUNT_DATATYPES 6 = end
+       name @Str "ptr"  streq if  DATATYPE_PTR      true
+  else name @Str "bool" streq if* DATATYPE_BOOL     true
+  else name @Str "float" streq if* DATATYPE_FLOAT   true
+  else name @Str "double" streq if* DATATYPE_DOUBLE true
+  else name @Str "int"  streq if* DATATYPE_INT      true
+  else name @Str "addr" streq if* DATATYPE_ADDR     true
   else 0 false end
 end
 
@@ -609,9 +613,11 @@ proc datatype-name
   --
   int ptr
 in
-  assert "Exhaustive handling of data types in datatype-name" COUNT_DATATYPES 4 = end
+  assert "Exhaustive handling of data types in datatype-name" COUNT_DATATYPES 6 = end
        dup DATATYPE_INT  = if  drop "int"
   else dup DATATYPE_BOOL = if* drop "bool"
+  else dup DATATYPE_FLOAT = if* drop "float"
+  else dup DATATYPE_DOUBLE = if* drop "double"
   else dup DATATYPE_PTR  = if* drop "ptr"
   else dup DATATYPE_ADDR = if* drop "addr"
   else
@@ -626,6 +632,8 @@ end
 /// BEGIN Intrinsics //////////////////////////////
 /// Intrinsics are built-in function of the language with the hardcoded implementation.
 const INTRINSIC_PLUS      1 offset end
+const INTRINSIC_F32_PLUS  1 offset end
+const INTRINSIC_F64_PLUS  1 offset end
 const INTRINSIC_MINUS     1 offset end
 const INTRINSIC_MUL       1 offset end
 const INTRINSIC_DIVMOD    1 offset end
@@ -656,9 +664,11 @@ const INTRINSIC_LOAD32    1 offset end
 const INTRINSIC_STORE32   1 offset end
 const INTRINSIC_LOAD64    1 offset end
 const INTRINSIC_STORE64   1 offset end
-assert "Exhaustive cast intrinsic definition" COUNT_DATATYPES 4 = end
+assert "Exhaustive cast intrinsic definition" COUNT_DATATYPES 6 = end
 const INTRINSIC_CAST_PTR  1 offset end
 const INTRINSIC_CAST_INT  1 offset end
+const INTRINSIC_CAST_FLOAT 1 offset end
+const INTRINSIC_CAST_DOUBLE 1 offset end
 const INTRINSIC_CAST_BOOL 1 offset end
 const INTRINSIC_CAST_ADDR 1 offset end
 const INTRINSIC_ARGC      1 offset end
@@ -679,8 +689,10 @@ proc intrinsic-name
   --
   int ptr // name
 in
-  assert "Exhaustive handling of Intrinsics in intrinsic-name" COUNT_INTRINSICS 46 = end
+  assert "Exhaustive handling of Intrinsics in intrinsic-name" COUNT_INTRINSICS 50 = end
        dup INTRINSIC_PLUS      = if  drop "+"
+  else dup INTRINSIC_F32_PLUS  = if* drop "+."
+  else dup INTRINSIC_F64_PLUS  = if* drop "+:"
   else dup INTRINSIC_MINUS     = if* drop "-"
   else dup INTRINSIC_MUL       = if* drop "*"
   else dup INTRINSIC_DIVMOD    = if* drop "divmod"
@@ -714,6 +726,8 @@ in
   else dup INTRINSIC_CAST_PTR  = if* drop "cast(ptr)"
   else dup INTRINSIC_CAST_INT  = if* drop "cast(int)"
   else dup INTRINSIC_CAST_BOOL = if* drop "cast(bool)"
+  else dup INTRINSIC_CAST_FLOAT = if* drop "cast(float)"
+  else dup INTRINSIC_CAST_DOUBLE = if* drop "cast(double)"
   else dup INTRINSIC_CAST_ADDR = if* drop "cast(addr)"
   else dup INTRINSIC_ARGC      = if* drop "argc"
   else dup INTRINSIC_ARGV      = if* drop "argv"
@@ -742,8 +756,10 @@ in
   memory name sizeof(Str) end
   name !Str
   true
-  assert "Exhaustive handling of Intrinsics in intrinsic-by-name" COUNT_INTRINSICS 46 = end
+  assert "Exhaustive handling of Intrinsics in intrinsic-by-name" COUNT_INTRINSICS 50 = end
        name @Str "+"          streq if  INTRINSIC_PLUS
+  else name @Str "+."         streq if* INTRINSIC_F32_PLUS
+  else name @Str "+:"         streq if* INTRINSIC_F64_PLUS
   else name @Str "-"          streq if* INTRINSIC_MINUS
   else name @Str "*"          streq if* INTRINSIC_MUL
   else name @Str "divmod"     streq if* INTRINSIC_DIVMOD
@@ -777,6 +793,8 @@ in
   else name @Str "cast(ptr)"  streq if* INTRINSIC_CAST_PTR
   else name @Str "cast(int)"  streq if* INTRINSIC_CAST_INT
   else name @Str "cast(bool)" streq if* INTRINSIC_CAST_BOOL
+  else name @Str "cast(float)" streq if* INTRINSIC_CAST_FLOAT
+  else name @Str "cast(double)" streq if* INTRINSIC_CAST_DOUBLE
   else name @Str "cast(addr)" streq if* INTRINSIC_CAST_ADDR
   else name @Str "argc"       streq if* INTRINSIC_ARGC
   else name @Str "argv"       streq if* INTRINSIC_ARGV
@@ -803,7 +821,7 @@ end
 // TODO: make conditional and unconditional jumps jump by relative address
 // This will make the code more relocatable which will make it easily inlinable
 
-assert "Exhaustive push IR instructions definition for data types. For each data type we must have a corresponding OP_PUSH_<TYPE> instruction." COUNT_DATATYPES 4 = end
+assert "Exhaustive push IR instructions definition for data types. For each data type we must have a corresponding OP_PUSH_<TYPE> instruction." COUNT_DATATYPES 6 = end
 // OP_PUSH_INT: Push an integer onto the data stack.
 //
 // operand type:    int
@@ -814,6 +832,16 @@ const OP_PUSH_INT        1 offset end
 // operand type:    bool
 // operand purpose: The boolean we are pushing.
 const OP_PUSH_BOOL       1 offset end
+// OP_PUSH_FLOAT: Push a float onto the data stack.
+//
+// operand type:    float
+// operand purpose: The float we are pushing.
+const OP_PUSH_FLOAT       1 offset end
+// OP_PUSH_DOUBLE: Push a double onto the data stack.
+//
+// operand type:    double
+// operand purpose: The double we are pushing.
+const OP_PUSH_DOUBLE       1 offset end
 // OP_PUSH_PTR: Push a pointer onto the data stack.
 //
 // operand type:    ptr
@@ -1008,9 +1036,11 @@ proc op-type-as-str
   --
   int ptr // str
 in
-  assert "Exhaustive handling of Op types in print-op-type" COUNT_OPS 26 = end
+  assert "Exhaustive handling of Op types in print-op-type" COUNT_OPS 28 = end
        dup OP_PUSH_INT        = if  "OP_PUSH_INT"
   else dup OP_PUSH_BOOL       = if* "OP_PUSH_BOOL"
+  else dup OP_PUSH_FLOAT       = if* "OP_PUSH_FLOAT"
+  else dup OP_PUSH_DOUBLE       = if* "OP_PUSH_DOUBLE"
   else dup OP_PUSH_PTR        = if* "OP_PUSH_PTR"
   else dup OP_PUSH_ADDR       = if* "OP_PUSH_ADDR"
   else dup OP_PUSH_GLOBAL_MEM = if* "OP_PUSH_GLOBAL_MEM"
@@ -1609,14 +1639,12 @@ in
       op Op.type ptr+ @int
       op Op.operand ptr+ @int
       let type operand in
-        assert "Exhaustive handling of Op types in generate-op-intel-linux-x86_64" COUNT_OPS 26 = end
-        type OP_PUSH_INT = if
-           "    mov rax, "   bfd bputs operand bfd bputu "\n" bfd bputs
-           "    push rax\n"  bfd bputs
-        else type OP_PUSH_BOOL = if*
-           "    mov rax, "   bfd bputs operand bfd bputu "\n" bfd bputs
-           "    push rax\n"  bfd bputs
-        else type OP_PUSH_PTR = if*
+        assert "Exhaustive handling of Op types in generate-op-intel-linux-x86_64" COUNT_OPS 28 = end
+        type OP_PUSH_INT =
+        type OP_PUSH_BOOL = lor
+        type OP_PUSH_FLOAT = lor
+        type OP_PUSH_PTR = lor
+        if
            "    mov rax, "   bfd bputs operand bfd bputu "\n" bfd bputs
            "    push rax\n"  bfd bputs
         else type OP_PUSH_ADDR = if*
@@ -1793,13 +1821,29 @@ in
            // ignored
         else type OP_INTRINSIC = if*
             assert "Exhaustive handling of Intrinsics in generate-op-intel-linux-x86_64"
-              COUNT_INTRINSICS 46 =
+              COUNT_INTRINSICS 50 =
             end
 
             operand INTRINSIC_PLUS = if
                 "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    add rax, rbx\n"        bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F32_PLUS = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movd xmm0, eax\n"      bfd bputs
+                "    movd xmm1, ebx\n"      bfd bputs
+                "    addss xmm0, xmm1\n"    bfd bputs
+                "    movd eax, xmm0\n"      bfd bputs
+                "    push rax\n"            bfd bputs
+            else operand INTRINSIC_F64_PLUS = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    movq xmm0, rax\n"      bfd bputs
+                "    movq xmm1, rbx\n"      bfd bputs
+                "    addsd xmm0, xmm1\n"    bfd bputs
+                "    movq rax, xmm0\n"      bfd bputs
                 "    push rax\n"            bfd bputs
             else operand INTRINSIC_MINUS = if*
                 "    pop rax\n"             bfd bputs
@@ -1985,6 +2029,8 @@ in
             else operand INTRINSIC_CAST_PTR = if*
             else operand INTRINSIC_CAST_INT = if*
             else operand INTRINSIC_CAST_BOOL = if*
+            else operand INTRINSIC_CAST_FLOAT = if*
+            else operand INTRINSIC_CAST_DOUBLE = if*
             else operand INTRINSIC_CAST_ADDR = if*
             else operand INTRINSIC_SYSCALL0 = if*
                 "    pop rax\n"             bfd bputs
@@ -2587,7 +2633,7 @@ in
       DATATYPE_INT token Token.value ptr+ @64 const-stack-push
     else token Token.type ptr+ @64 TOKEN_WORD = if*
       token Token.value ptr+ @Str intrinsic-by-name if
-        assert "Exhaustive handling of casts in eval-const-value" COUNT_DATATYPES 4 = end
+        assert "Exhaustive handling of casts in eval-const-value" COUNT_DATATYPES 6 = end
         dup INTRINSIC_CAST_PTR = if
           1 token const-expect-arity
           const-stack-pop
@@ -2599,6 +2645,18 @@ in
           const-stack-pop
           swap drop
           DATATYPE_BOOL swap
+          const-stack-push
+        else dup INTRINSIC_CAST_FLOAT = if*
+          1 token const-expect-arity
+          const-stack-pop
+          swap drop
+          DATATYPE_FLOAT swap
+          const-stack-push
+        else dup INTRINSIC_CAST_DOUBLE = if*
+          1 token const-expect-arity
+          const-stack-pop
+          swap drop
+          DATATYPE_DOUBLE swap
           const-stack-push
         else dup INTRINSIC_CAST_ADDR = if*
           1 token const-expect-arity
@@ -3810,7 +3868,8 @@ in
               end
 
               value // token.value
-                assert "Exhaustive handling of Op types in compile-file-into-ops" COUNT_OPS 26 = end
+                assert "Exhaustive handling of Op types in compile-file-into-ops" COUNT_OPS 28 = end
+                // TODO: float and double literals
                 dup @Str intrinsic-by-name if
                   OP_INTRINSIC swap token push-op
                 else drop dup @Str bind-table-lookup if*
@@ -3820,15 +3879,13 @@ in
                   push-op
                 else drop dup @Str const-lookup dup NULL ptr!= if*
                   dup Const.type ptr+ @int
-                  assert "Exhaustive handling of data types in Const compilation\n" COUNT_DATATYPES 4 = end
-                  dup DATATYPE_INT = if
-                    drop OP_PUSH_INT
-                  else dup DATATYPE_BOOL = if*
-                    drop OP_PUSH_BOOL
-                  else dup DATATYPE_PTR = if*
-                    drop OP_PUSH_PTR
-                  else dup DATATYPE_ADDR = if*
-                    drop OP_PUSH_ADDR
+                  assert "Exhaustive handling of data types in Const compilation\n" COUNT_DATATYPES 6 = end
+                  dup DATATYPE_INT = if drop OP_PUSH_INT
+                  else dup DATATYPE_BOOL = if* drop OP_PUSH_BOOL
+                  else dup DATATYPE_FLOAT = if* drop OP_PUSH_FLOAT
+                  else dup DATATYPE_DOUBLE = if* drop OP_PUSH_DOUBLE
+                  else dup DATATYPE_PTR = if* drop OP_PUSH_PTR
+                  else dup DATATYPE_ADDR = if* drop OP_PUSH_ADDR
                   else
                     drop 0
                     here eputs ": unreachable\n" eputs
@@ -4270,22 +4327,25 @@ in
   ins outs type-check-stack
 end
 
-proc type-check-binary-int-operator
+proc type-check-binary-operator
   ptr // token
   ptr // stack
+  int // datatype
 in
-  memory ins sizeof(TypeStack) end
-  sizeof(TypeStack) 0 ins memset drop
-  over
-    DATATYPE_INT over Token.loc ptr+ ins type-stack-push
-    DATATYPE_INT over Token.loc ptr+ ins type-stack-push
-  drop
-  memory outs sizeof(TypeStack) end
-  sizeof(TypeStack) 0 outs memset drop
-  over
-    DATATYPE_INT over Token.loc ptr+ outs type-stack-push
-  drop
-  ins outs type-check-stack
+  let token stack datatype in
+    memory ins sizeof(TypeStack) end
+    sizeof(TypeStack) 0 ins memset drop
+    token
+      datatype token Token.loc ptr+ ins type-stack-push
+      datatype token Token.loc ptr+ ins type-stack-push
+    drop
+    memory outs sizeof(TypeStack) end
+    sizeof(TypeStack) 0 outs memset drop
+    token
+      datatype token Token.loc ptr+ outs type-stack-push
+    drop
+    token stack ins outs type-check-stack
+  end
 end
 
 proc type-check-if-op
@@ -4604,7 +4664,7 @@ in
       op
       memcpy drop
 
-      assert "Exhaustive handling of Op types in type-check-program-from" COUNT_OPS 26 = end
+      assert "Exhaustive handling of Op types in type-check-program-from" COUNT_OPS 28 = end
 
       op Op.type ptr+ @int OP_PUSH_INT = if
         DATATYPE_INT
@@ -4617,6 +4677,24 @@ in
         true // continue
       else op Op.type ptr+ @int OP_PUSH_BOOL = if*
         DATATYPE_BOOL
+        op Op.token ptr+ Token.loc ptr+
+        context TypeContext.stack ptr+
+        type-stack-push
+
+        context TypeContext.ip ptr+ inc64
+
+        true // continue
+      else op Op.type ptr+ @int OP_PUSH_FLOAT = if*
+        DATATYPE_FLOAT
+        op Op.token ptr+ Token.loc ptr+
+        context TypeContext.stack ptr+
+        type-stack-push
+
+        context TypeContext.ip ptr+ inc64
+
+        true // continue
+      else op Op.type ptr+ @int OP_PUSH_DOUBLE = if*
+        DATATYPE_DOUBLE
         op Op.token ptr+ Token.loc ptr+
         context TypeContext.stack ptr+
         type-stack-push
@@ -4856,21 +4934,25 @@ in
         // else branch
         false // break
       else op Op.type ptr+ @int OP_INTRINSIC = if*
-        assert "Exhaustive handling of Intrinsics in type-check-program-from" COUNT_INTRINSICS 46 = end
+        assert "Exhaustive handling of Intrinsics in type-check-program-from" COUNT_INTRINSICS 50 = end
 
         op Op.operand ptr+ @int
           dup INTRINSIC_PLUS = if
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
+          else dup INTRINSIC_F32_PLUS = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_FLOAT type-check-binary-operator
+          else dup INTRINSIC_F64_PLUS = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_DOUBLE type-check-binary-operator
           else dup INTRINSIC_MINUS = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_MUL = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_DIVMOD = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-divmod-operator
           else dup INTRINSIC_IDIVMOD = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-divmod-operator
           else dup INTRINSIC_MAX = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_EQ = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
           else dup INTRINSIC_GT = if*
@@ -4884,13 +4966,13 @@ in
           else dup INTRINSIC_NE = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-cmp-int-operator
           else dup INTRINSIC_SHR = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_SHL = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_OR = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_AND = if*
-            op Op.token ptr+ context TypeContext.stack ptr+ type-check-binary-int-operator
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_NOT = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-unary-int-operator
           else dup INTRINSIC_PRINT = if*
@@ -4967,6 +5049,28 @@ in
             1 expect-arity
             sizeof(TypeStack) tmp-alloc
               dup  DATATYPE_BOOL
+              swap op Op.token ptr+ Token.loc ptr+
+              swap type-stack-push
+            type-check-stack
+          else dup INTRINSIC_CAST_FLOAT = if*
+            op Op.token ptr+
+            context TypeContext.stack ptr+
+            over
+            over
+            1 expect-arity
+            sizeof(TypeStack) tmp-alloc
+              dup  DATATYPE_FLOAT
+              swap op Op.token ptr+ Token.loc ptr+
+              swap type-stack-push
+            type-check-stack
+          else dup INTRINSIC_CAST_DOUBLE = if*
+            op Op.token ptr+
+            context TypeContext.stack ptr+
+            over
+            over
+            1 expect-arity
+            sizeof(TypeStack) tmp-alloc
+              dup  DATATYPE_DOUBLE
               swap op Op.token ptr+ Token.loc ptr+
               swap type-stack-push
             type-check-stack
