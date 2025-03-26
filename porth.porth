@@ -1937,16 +1937,16 @@ in
                 "    sub rbx, rax\n"        bfd bputs
                 "    push rbx\n"            bfd bputs
             else operand INTRINSIC_F32_MINUS = if*
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movd xmm0, eax\n"      bfd bputs
                 "    movd xmm1, ebx\n"      bfd bputs
                 "    subss xmm0, xmm1\n"    bfd bputs
                 "    movd eax, xmm0\n"      bfd bputs
                 "    push rax\n"            bfd bputs
             else operand INTRINSIC_F64_MINUS = if*
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movq xmm0, rax\n"      bfd bputs
                 "    movq xmm1, rbx\n"      bfd bputs
                 "    subsd xmm0, xmm1\n"    bfd bputs
@@ -1988,16 +1988,16 @@ in
                 "    push rax\n"            bfd bputs
                 "    push rdx\n"            bfd bputs
             else operand INTRINSIC_F32_DIV = if*
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movd xmm0, eax\n"      bfd bputs
                 "    movd xmm1, ebx\n"      bfd bputs
                 "    divss xmm0, xmm1\n"    bfd bputs
                 "    movd eax, xmm0\n"      bfd bputs
                 "    push rax\n"            bfd bputs
             else operand INTRINSIC_F64_DIV = if*
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movq xmm0, rax\n"      bfd bputs
                 "    movq xmm1, rbx\n"      bfd bputs
                 "    divsd xmm0, xmm1\n"    bfd bputs
@@ -2781,6 +2781,29 @@ in
   swap ConstFrame.value ptr+ @64
 end
 
+proc const-stack-pop-expect-type
+  ptr // token
+  int // type
+  --
+  int // value
+in
+  const-stack-pop
+  let token expected actual value in
+    expected actual != if
+      token Token.loc ptr+                     eputloc
+      ": ERROR: unexpected operand type for `" eputs
+      token Token.text ptr+ @Str               eputs
+      "`: expected `"                          eputs
+      expected datatype-name                   eputs
+      "`, got `"                               eputs
+      actual datatype-name                     eputs
+      "`\n"                                    eputs
+      1 exit
+    end
+    value
+  end
+end
+
 proc const-expect-arity
   int // arity
   ptr // token
@@ -2960,67 +2983,152 @@ in
           swap drop
           DATATYPE_INT swap
           const-stack-push
-        else dup INTRINSIC_MINUS = if*
-          2 token const-expect-arity
-          // TODO: `-` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
-          swap
-          -
-          DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_PLUS = if*
           2 token const-expect-arity
-          // TODO: `+` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
           swap
           +
           DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_MINUS = if*
+          2 token const-expect-arity
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
+          swap
+          -
+          DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_MUL = if*
           2 token const-expect-arity
-          // TODO: `*` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
           swap
           *
           DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_MAX = if*
+          2 token const-expect-arity
+          // TODO: `max` intrinsic ignores the types in compile time evaluation
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
+          swap
+          max
+          DATATYPE_INT swap const-stack-push
+
+        else dup INTRINSIC_F32_PLUS = if*
+          2 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          cast(float) swap cast(float)
+          +.
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_F64_PLUS = if*
+          2 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          cast(double) swap cast(double)
+          +:
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
+        else dup INTRINSIC_F32_MINUS = if*
+          2 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          cast(float) swap cast(float)
+          -.
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_F64_MINUS = if*
+          2 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          cast(double) swap cast(double)
+          -:
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
+        else dup INTRINSIC_F32_MUL = if*
+          2 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          cast(float) swap cast(float)
+          *.
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_F64_MUL = if*
+          2 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          cast(double) swap cast(double)
+          *:
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
+        else dup INTRINSIC_F32_DIV = if*
+          2 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          cast(float) swap cast(float)
+          /.
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_F64_DIV = if*
+          2 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          cast(double) swap cast(double)
+          /:
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
+        else dup INTRINSIC_F32_MAX = if*
+          2 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          token DATATYPE_FLOAT const-stack-pop-expect-type
+          cast(float) swap cast(float)
+          max.
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_F64_MAX = if*
+          2 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          token DATATYPE_DOUBLE const-stack-pop-expect-type
+          cast(double) swap cast(double)
+          max:
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
+
+        else dup INTRINSIC_INT2FLOAT = if*
+          1 token const-expect-arity
+          token DATATYPE_INT const-stack-pop-expect-type
+          int2float
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_FLOAT2INT = if*
+          1 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type cast(float)
+          float2int
+          DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_INT2DOUBLE = if*
+          1 token const-expect-arity
+          token DATATYPE_INT const-stack-pop-expect-type
+          int2double
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
+        else dup INTRINSIC_DOUBLE2INT = if*
+          1 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type cast(double)
+          double2int
+          DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_SHL = if*
           2 token const-expect-arity
-          // TODO: `*` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
           swap
           shl
           DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_SHR = if*
           2 token const-expect-arity
-          // TODO: `*` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
           swap
           shr
           DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_EQ = if*
           2 token const-expect-arity
-          // TODO: `=` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
           swap
           = cast(int)
           DATATYPE_BOOL swap const-stack-push
-        else dup INTRINSIC_MAX = if*
-          2 token const-expect-arity
-          // TODO: `max` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
-          swap
-          max
-          DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_DIVMOD = if*
           2 token const-expect-arity
-          // TODO: `divmod` intrinsic ignores the types in compile time evaluation
-          const-stack-pop swap drop
-          const-stack-pop swap drop
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
           swap
           divmod
           swap

@@ -2,14 +2,26 @@
 :b stdin 0
 
 :i returncode 0
-:b stdout 198
+:b stdout 318
 Addition:
+69
+On floats:
+69
+On doubles:
 69
 ------------------------------
 Subtraction:
 420
+On floats:
+420
+On doubles:
+420
 ------------------------------
 Divison:
+69
+On floats:
+69
+On doubles:
 69
 ------------------------------
 Modulo:
@@ -17,6 +29,10 @@ Modulo:
 4
 ------------------------------
 Multiplication:
+420
+On floats:
+420
+On doubles:
 420
 
 :b stderr 0
