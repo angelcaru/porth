@@ -673,6 +673,7 @@ const INTRINSIC_SHR         1 offset end
 const INTRINSIC_SHL         1 offset end
 const INTRINSIC_OR          1 offset end
 const INTRINSIC_AND         1 offset end
+const INTRINSIC_XOR         1 offset end
 const INTRINSIC_NOT         1 offset end
 const INTRINSIC_INT2FLOAT   1 offset end
 const INTRINSIC_FLOAT2INT   1 offset end
@@ -717,7 +718,7 @@ proc intrinsic-name
   --
   int ptr // name
 in
-  assert "Exhaustive handling of Intrinsics in intrinsic-name" COUNT_INTRINSICS 74 = end
+  assert "Exhaustive handling of Intrinsics in intrinsic-name" COUNT_INTRINSICS 75 = end
        dup INTRINSIC_PLUS        = if  drop "+"
   else dup INTRINSIC_MINUS       = if* drop "-"
   else dup INTRINSIC_MUL         = if* drop "*"
@@ -762,6 +763,7 @@ in
   else dup INTRINSIC_SHL         = if* drop "shl"
   else dup INTRINSIC_OR          = if* drop "or"
   else dup INTRINSIC_AND         = if* drop "and"
+  else dup INTRINSIC_XOR         = if* drop "xor"
   else dup INTRINSIC_NOT         = if* drop "not"
   else dup INTRINSIC_INT2FLOAT   = if* drop "int2float"
   else dup INTRINSIC_FLOAT2INT   = if* drop "float2int"
@@ -813,7 +815,7 @@ in
   memory name sizeof(Str) end
   name !Str
   true
-  assert "Exhaustive handling of Intrinsics in intrinsic-by-name" COUNT_INTRINSICS 74 = end
+  assert "Exhaustive handling of Intrinsics in intrinsic-by-name" COUNT_INTRINSICS 75 = end
        name @Str "+"            streq if  INTRINSIC_PLUS
   else name @Str "-"            streq if* INTRINSIC_MINUS
   else name @Str "*"            streq if* INTRINSIC_MUL
@@ -858,6 +860,7 @@ in
   else name @Str "shl"          streq if* INTRINSIC_SHL
   else name @Str "or"           streq if* INTRINSIC_OR
   else name @Str "and"          streq if* INTRINSIC_AND
+  else name @Str "xor"          streq if* INTRINSIC_XOR
   else name @Str "not"          streq if* INTRINSIC_NOT
   else name @Str "int2float"    streq if* INTRINSIC_INT2FLOAT
   else name @Str "float2int"    streq if* INTRINSIC_FLOAT2INT
@@ -1908,7 +1911,7 @@ in
            // ignored
         else type OP_INTRINSIC = if*
             assert "Exhaustive handling of Intrinsics in generate-op-intel-linux-x86_64"
-              COUNT_INTRINSICS 74 =
+              COUNT_INTRINSICS 75 =
             end
 
             operand INTRINSIC_PLUS = if
@@ -2045,6 +2048,11 @@ in
                 "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
                 "    and rbx, rax\n"        bfd bputs
+                "    push rbx\n"            bfd bputs
+            else operand INTRINSIC_XOR = if*
+                "    pop rax\n"             bfd bputs
+                "    pop rbx\n"             bfd bputs
+                "    xor rbx, rax\n"        bfd bputs
                 "    push rbx\n"            bfd bputs
             else operand INTRINSIC_NOT = if*
                 "    pop rax\n"             bfd bputs
@@ -3007,7 +3015,6 @@ in
           DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_MAX = if*
           2 token const-expect-arity
-          // TODO: `max` intrinsic ignores the types in compile time evaluation
           token DATATYPE_INT const-stack-pop-expect-type
           token DATATYPE_INT const-stack-pop-expect-type
           swap
@@ -3105,6 +3112,23 @@ in
           token DATATYPE_DOUBLE const-stack-pop-expect-type cast(double)
           double2int
           DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_OR = if*
+          2 token const-expect-arity
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
+          swap
+          or
+          DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_AND = if*
+          2 token const-expect-arity
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
+          swap
+          and
+          DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_XOR = if*
+          here eputs ": TODO: INTRINSIC_XOR is not yet implemented for Ken Thompson hack-related reasons\n" eputs
+          1 exit
         else dup INTRINSIC_SHL = if*
           2 token const-expect-arity
           token DATATYPE_INT const-stack-pop-expect-type
@@ -5348,7 +5372,7 @@ in
         // else branch
         false // break
       else op Op.type ptr+ @int OP_INTRINSIC = if*
-        assert "Exhaustive handling of Intrinsics in type-check-program-from" COUNT_INTRINSICS 74 = end
+        assert "Exhaustive handling of Intrinsics in type-check-program-from" COUNT_INTRINSICS 75 = end
 
         op Op.operand ptr+ @int
           dup INTRINSIC_PLUS = if
@@ -5430,6 +5454,8 @@ in
           else dup INTRINSIC_OR = if*
             op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_AND = if*
+            op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
+          else dup INTRINSIC_XOR = if*
             op Op.token ptr+ context TypeContext.stack ptr+ DATATYPE_INT type-check-binary-operator
           else dup INTRINSIC_NOT = if*
             op Op.token ptr+ context TypeContext.stack ptr+ type-check-unary-int-operator
