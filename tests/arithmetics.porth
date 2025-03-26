@@ -3,16 +3,28 @@ include "std.porth"
 proc main in
   "Addition:\n" puts
   34 35 + print
-  
+  "On floats:\n" puts
+  34 int2float 35 int2float +. float2int print
+  "On doubles:\n" puts
+  34 int2double 35 int2double +: double2int print
+
   "------------------------------\n" puts
   
   "Subtraction:\n" puts
   500 80 - print
+  "On floats:\n" puts
+  500 int2float 80 int2float -. float2int print
+  "On doubles:\n" puts
+  500 int2double 80 int2double -: double2int print
   
   "------------------------------\n" puts
   
   "Divison:\n" puts
   69000 1000 / print
+  "On floats:\n" puts
+  69000 int2float 1000 int2float /. float2int print
+  "On doubles:\n" puts
+  69000 int2double 1000 int2double /: double2int print
   
   "------------------------------\n" puts
   
@@ -24,4 +36,8 @@ proc main in
   
   "Multiplication:\n" puts
   42 10 * print
+  "On floats:\n" puts
+  42 int2float 10 int2float *. float2int print
+  "On doubles:\n" puts
+  42 int2double 10 int2double *: double2int print
 end
