@@ -1864,6 +1864,7 @@ in
            "    mov [ret_stack_rsp], rsp\n" bfd bputs
            "    mov rsp, rax\n"             bfd bputs
         else type OP_CALL_EXTERN = if*
+           // TODO: support for floats in calls to extern procedures
            operand sizeof(Proc) * procs +ptr
            let prok in
              prok Proc.ins ptr+ TypeStack.count ptr+ @int 1 -
