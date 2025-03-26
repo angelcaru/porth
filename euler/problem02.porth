@@ -2,6 +2,7 @@ include "std.porth"
 
 proc main in
   memory acc sizeof(u64) end
+  0 acc !64
   
   1 2 while over 4000000 < do
     over 2 mod 0 = if

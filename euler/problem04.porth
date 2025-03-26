@@ -2,6 +2,7 @@ include "std.porth"
 
 proc main in
   memory ans sizeof(u64) end
+  0 ans !64
   
   100 while dup 1000 < do
     100 while dup 1000 < do
