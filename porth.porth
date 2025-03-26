@@ -3127,8 +3127,12 @@ in
           and
           DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_XOR = if*
-          here eputs ": TODO: INTRINSIC_XOR is not yet implemented for Ken Thompson hack-related reasons\n" eputs
-          1 exit
+          2 token const-expect-arity
+          token DATATYPE_INT const-stack-pop-expect-type
+          token DATATYPE_INT const-stack-pop-expect-type
+          swap
+          xor
+          DATATYPE_INT swap const-stack-push
         else dup INTRINSIC_SHL = if*
           2 token const-expect-arity
           token DATATYPE_INT const-stack-pop-expect-type
