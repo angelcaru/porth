@@ -16,7 +16,7 @@ file_extensions:
   - porth
 
 variables:
-  keywords: (if|if\*|else|while|do|include|memory|proc|const|end|offset|reset|assert|in|inline|here|addr-of|call-like|let|peek)
+  keywords: (if|if\*|else|while|do|include|memory|proc|const|end|offset|reset|assert|in|inline|here|addr-of|call-like|let|peek|linkflag|extern|return)
   char_escape: \\[nr\\"']
   number: ([0-9]+)
 

@@ -66,6 +66,7 @@ const KEYWORD_LET         1 offset end
 const KEYWORD_PEEK        1 offset end
 const KEYWORD_LINKFLAG    1 offset end
 const KEYWORD_EXTERN      1 offset end
+const KEYWORD_RETURN      1 offset end
 const COUNT_KEYWORDS         reset end
 
 proc keyword-by-name
@@ -76,7 +77,7 @@ in
   memory name sizeof(Str) end
   name !Str
   true
-  assert "Exhaustive keyword handling" COUNT_KEYWORDS 23 = end
+  assert "Exhaustive keyword handling" COUNT_KEYWORDS 24 = end
        name @Str "if"        streq if  KEYWORD_IF
   else name @Str "if*"       streq if* KEYWORD_IFSTAR
   else name @Str "else"      streq if* KEYWORD_ELSE
@@ -99,7 +100,8 @@ in
   else name @Str "let"       streq if* KEYWORD_LET
   else name @Str "peek"      streq if* KEYWORD_PEEK
   else name @Str "linkflag"  streq if* KEYWORD_LINKFLAG
-  else name @Str "extern"      streq if* KEYWORD_EXTERN
+  else name @Str "extern"    streq if* KEYWORD_EXTERN
+  else name @Str "return"    streq if* KEYWORD_RETURN
   else
     drop false 0
   end
@@ -112,7 +114,7 @@ proc keyword-name
   --
   int ptr
 in
-  assert "Exhaustive keyword handling" COUNT_KEYWORDS 23 = end
+  assert "Exhaustive keyword handling" COUNT_KEYWORDS 24 = end
        dup KEYWORD_IF          = if  "if"
   else dup KEYWORD_IFSTAR      = if* "if*"
   else dup KEYWORD_ELSE        = if* "else"
@@ -136,6 +138,7 @@ in
   else dup KEYWORD_PEEK        = if* "peek"
   else dup KEYWORD_LINKFLAG    = if* "linkflag"
   else dup KEYWORD_EXTERN      = if* "extern"
+  else dup KEYWORD_RETURN      = if* "return"
   else
     0 NULL
     here eputs ": unreachable\n" eputs
@@ -3188,7 +3191,7 @@ in
       end
       drop // intrinsic
     else token Token.type ptr+ @64 TOKEN_KEYWORD = if*
-      assert "Exhaustive handling of keywords in eval-const-value" COUNT_KEYWORDS 23 = end
+      assert "Exhaustive handling of keywords in eval-const-value" COUNT_KEYWORDS 24 = end
       token Token.value ptr+ @64
         dup KEYWORD_END = if
           true done !64
@@ -3799,7 +3802,7 @@ in
             else type @int TOKEN_KEYWORD = if*
               value @int
               let keyword in
-                assert "Exhaustive handling of keywords in compile-file-into-ops" COUNT_KEYWORDS 23 = end
+                assert "Exhaustive handling of keywords in compile-file-into-ops" COUNT_KEYWORDS 24 = end
                 keyword KEYWORD_IF = if
                   ops-count @64 parse-block-stack-push
                   OP_IF 0 token push-op
@@ -4275,6 +4278,11 @@ in
 
                   OP_BIND_PEEK
                   lexer parse-bind-list
+                  token
+                  push-op
+                else keyword KEYWORD_RETURN = if*
+                  OP_RET
+                  local-memory-capacity @64 bind-table-count @64 8 * +
                   token
                   push-op
                 else
