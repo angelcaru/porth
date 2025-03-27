@@ -1,0 +1,26 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  builds:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq fasm
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.11.2'
+          architecture: x64
+      - name: run tests
+        run: |
+          # Bootstrap the compiler
+          cc -no-pie -o porth0 bootstrap/porth-linux-x86_64.s
+
+          # Check that it can compile itself
+          export PATH="$PATH:$PWD"
+          ./porth0 com -r porth.porth com -r porth.porth com -r porth.porth com -r porth.porth
+
+          # Run tests
+          python3 ./test.py full
