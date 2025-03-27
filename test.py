@@ -182,6 +182,9 @@ def usage(exe_name: str):
     print("  Run or update the tests. The default [SUBCOMMAND] is 'run'.")
     print()
     print("  SUBCOMMAND:")
+    print("    update-bootstrap")
+    print("      Update the files in './bootstrap' folder")
+    print()
     print("    run [TARGET]")
     print("      Run the test on the [TARGET]. The [TARGET] is either a *.porth file or ")
     print("      folder with *.porth files. The default [TARGET] is './tests/'.")
@@ -215,7 +218,19 @@ if __name__ == '__main__':
     if len(argv) > 0:
         subcommand, *argv = argv
 
-    if subcommand == 'update' or subcommand == 'record':
+    if subcommand == 'update-bootstrap':
+        fasm = cmd_run_echoed(["./porth", "com", "porth.porth"])
+        if fasm.returncode != 0:
+            print("ERROR: porth.porth failed to build with fasm backend", file=sys.stderr)
+            exit(1)
+        os.replace("./porth.asm", "./bootstrap/porth-linux-x86_64.fasm")
+
+        gas = cmd_run_echoed(["./porth", "com", "-g", "porth.porth"])
+        if gas.returncode != 0:
+            print("ERROR: porth.porth failed to build with gas backend", file=sys.stderr)
+            exit(1)
+        os.replace("./porth.asm", "./bootstrap/porth-linux-x86_64.s")
+    elif subcommand == 'update' or subcommand == 'record':
         subsubcommand = 'output'
         if len(argv) > 0:
             subsubcommand, *argv = argv
@@ -242,6 +257,8 @@ if __name__ == '__main__':
         else:
             usage(exe_name)
             print("[ERROR] unknown subcommand `%s %s`. Available commands are `%s input` or `%s output`" % (subcommand, subsubcommand, subcommand, subcommand), file=sys.stderr)
+            if subsubcommand == "bootstrap":
+                print("Maybe you meant `update-bootstrap`? (Notice the hyphen)")
             exit(1)
     elif subcommand == 'run' or subcommand == 'test':
         target = './tests/'
