@@ -94,25 +94,39 @@ def run_test_for_file(file_path: str, stats: RunStats = RunStats()):
     error = False
 
     if tc is not None:
-        # TODO: do something about fasm splash output
-        com = cmd_run_echoed(["./porth", "com", "-r", "-s", file_path, *tc.argv], input=tc.stdin, capture_output=True)
-        if com.returncode != tc.returncode or com.stdout != tc.stdout or com.stderr != tc.stderr:
-            print("[ERROR] Unexpected output")
+        fasm = cmd_run_echoed(["./porth", "com", "-r", "-s", file_path, *tc.argv], input=tc.stdin, capture_output=True)
+        if fasm.returncode != tc.returncode or fasm.stdout != tc.stdout or fasm.stderr != tc.stderr:
+            print("[ERROR] Unexpected output (fasm)")
             print("  Expected:")
             print("    return code: %s" % tc.returncode)
             print("    stdout: \n%s" % tc.stdout.decode("utf-8"))
             print("    stderr: \n%s" % tc.stderr.decode("utf-8"))
             print("  Actual:")
-            print("    return code: %s" % com.returncode)
-            print("    stdout: \n%s" % com.stdout.decode("utf-8"))
-            print("    stderr: \n%s" % com.stderr.decode("utf-8"))
+            print("    return code: %s" % fasm.returncode)
+            print("    stdout: \n%s" % fasm.stdout.decode("utf-8"))
+            print("    stderr: \n%s" % fasm.stderr.decode("utf-8"))
+            error = True
+            stats.failed += 1
+
+        gas = cmd_run_echoed(["./porth", "com", "-r", "-g", "-s", file_path, *tc.argv], input=tc.stdin, capture_output=True)
+        if gas.returncode != tc.returncode or gas.stdout != tc.stdout or gas.stderr != tc.stderr:
+            print("[ERROR] Unexpected output (gas)")
+            print("  Expected:")
+            print("    return code: %s" % tc.returncode)
+            print("    stdout: \n%s" % tc.stdout.decode("utf-8"))
+            print("    stderr: \n%s" % tc.stderr.decode("utf-8"))
+            print("  Actual:")
+            print("    return code: %s" % gas.returncode)
+            print("    stdout: \n%s" % gas.stdout.decode("utf-8"))
+            print("    stderr: \n%s" % gas.stderr.decode("utf-8"))
             error = True
             stats.failed += 1
 
     else:
         print('[WARNING] Could not find any input/output data for %s. Ignoring testing. Only checking if it compiles.' % file_path)
-        com = cmd_run_echoed(["./porth", "com", file_path])
-        if com.returncode != 0:
+        fasm = cmd_run_echoed(["./porth", "com", file_path])
+        gas = cmd_run_echoed(["./porth", "com", "-g", file_path])
+        if fasm.returncode != 0 or gas.returncode != 0:
             error = True
             stats.failed += 1
         stats.ignored += 1
