@@ -3511,20 +3511,31 @@ proc current-proc -- ptr in
   end
 end
 
+const Binding.name sizeof(Str) offset end
+const Binding.count sizeof(int) offset end
+const sizeof(Binding) reset end
+
+inline proc @Binding ptr -- int ptr int in dup Binding.name ptr+ @Str rot Binding.count ptr+ @int end
+inline proc !Binding int ptr int ptr in
+  let b in*
+  b Binding.count ptr+ !int
+  b Binding.name ptr+ !Str
+end
+
 const BIND_TABLE_CAP 1024 end
-memory bind-table sizeof(Str) BIND_TABLE_CAP * end
+memory bind-table sizeof(Binding) BIND_TABLE_CAP * end
 memory bind-table-count sizeof(int) end
 
-proc bind-table-push int ptr in
+proc bind-table-push int ptr int in
   bind-table-count @int BIND_TABLE_CAP >= if
     here eputs ": Assertion Failed: bind table overflow!\n" eputs
     1 exit
   end
 
   bind-table-count @int
-  sizeof(Str) *
+  sizeof(Binding) *
   bind-table +ptr
-  !Str
+  !Binding
 
   bind-table-count inc64
 end
@@ -3540,7 +3551,7 @@ in
   bind-table-count @int 1 -
   while
     dup 0 >= if
-      dup sizeof(Str) * bind-table +ptr @Str
+      dup sizeof(Binding) * bind-table +ptr Binding.name ptr+ @Str
       name @Str
       streq
       lnot
@@ -3561,7 +3572,7 @@ proc bind-table-rev-top int in
   bind-table-count @int
   let n cap in
     n cap > if
-      here eputs ": Assertion Failed: not enough elements to reverse in bind-table-rev-top" eputs
+      here eputs ": Assertion Failed: not enough elements to reverse in bind-table-rev-top\n" eputs
       1 exit
     end
 
@@ -3569,13 +3580,13 @@ proc bind-table-rev-top int in
     cap 1 -
     while over over < do
       let i j in
-        i sizeof(Str) * bind-table +ptr
-        j sizeof(Str) * bind-table +ptr
+        i sizeof(Binding) * bind-table +ptr
+        j sizeof(Binding) * bind-table +ptr
         let a b in
-          a @Str
-          b @Str
-          a !Str
-          b !Str
+          a @Binding
+          b @Binding
+          a !Binding
+          b !Binding
         end
         i 1 +
         j 1 -
@@ -3598,40 +3609,63 @@ proc parse-bind-list
 in
   memory token sizeof(Token) end
   let lexer in
-    // TODOOOOOOOO: a bug in the typechecker related to `return` inside loops forces us to have this second zero here
-    // If you return a different stack state than the one you had entering the loop, it gets reported as the state
-    // of the stack changing between iterations, even though this is not the case
     0 0 while token lexer lexer-next-token do
-      drop
       token Token.type ptr+ @int
       token Token.value ptr+ @int
-      let count token-type token-value in
-        token-type TOKEN_WORD = if
-          token Token.value ptr+ @Str bind-table-push
-          count 1 +
-          0
-        else token-type TOKEN_KEYWORD = if*
-            token-value KEYWORD_IN =
-            token-value KEYWORD_INSTAR = lor
-          if
-            count bind-table-rev-top
-            count token-value return
-          else
-            token Token.loc ptr+                            eputloc
-            ": ERROR: keyword `"                            eputs
-            token-value keyword-name                        eputs
-            "` is not supported in the let-binding list.\n" eputs
-            1 exit 0 0
-          end
+      let name-count word-count token-type token-value in*
+      token-type TOKEN_WORD = if
+        token Token.value ptr+ @Str 1 bind-table-push
+        name-count 1 +
+        word-count 1 +
+      else token-type TOKEN_INT = if*
+        token lexer lexer-next-token lnot if
+          token Token.loc ptr+                           eputloc
+          ": ERROR: expected "                           eputs
+          TOKEN_WORD HUMAN_SINGULAR human-token-type     eputs
+          " after "                                      eputs
+          TOKEN_INT HUMAN_SINGULAR human-token-type      eputs
+          " in the let-binding list, but found nothing." eputs
+          1 exit
+        end
+        token Token.type ptr+ @int
+        let new-token-type in*
+
+        new-token-type TOKEN_WORD != if
+          token Token.loc ptr+                           eputloc
+          ": ERROR: expected "                           eputs
+          TOKEN_WORD HUMAN_SINGULAR human-token-type     eputs
+          " after "                                      eputs
+          TOKEN_INT HUMAN_SINGULAR human-token-type      eputs
+          " in the let-binding list, but found "         eputs
+          new-token-type HUMAN_SINGULAR human-token-type eputs
+          " instead\n"                                   eputs
+          1 exit
+        end
+
+        token Token.value ptr+ @Str token-value bind-table-push
+        name-count 1 +
+        word-count token-value +
+      else token-type TOKEN_KEYWORD = if*
+          token-value KEYWORD_IN =
+          token-value KEYWORD_INSTAR = lor
+        if
+          name-count bind-table-rev-top
+          word-count token-value return
         else
-          token Token.loc ptr+                                eputloc
-          ": ERROR: "                                         eputs
-          token-type HUMAN_PLURAL human-token-type            eputs
-          " are not supported in the let-binding list. Only " eputs
-          TOKEN_WORD HUMAN_PLURAL human-token-type            eputs
-          " are supported.\n"                                 eputs
+          token Token.loc ptr+                            eputloc
+          ": ERROR: keyword `"                            eputs
+          token-value keyword-name                        eputs
+          "` is not supported in the let-binding list.\n" eputs
           1 exit 0 0
         end
+      else
+        token Token.loc ptr+                                eputloc
+        ": ERROR: "                                         eputs
+        token-type HUMAN_PLURAL human-token-type            eputs
+        " are not supported in the let-binding list. Only " eputs
+        TOKEN_WORD HUMAN_PLURAL human-token-type            eputs
+        " are supported.\n"                                 eputs
+        1 exit 0 0
       end
     end
     token Token.loc ptr+
@@ -3644,27 +3678,40 @@ in
   end
 end
 
+proc unbind
+  ptr // token
+  ptr // begin-op
+in
+  let token begin-op in*
+
+  begin-op Op.operand ptr+ @int
+  let word-count in*
+
+  OP_UNBIND word-count token push-op
+
+  0 0 while dup word-count < do
+    let name-count unbound in*
+    name-count 1 +
+    name-count sizeof(Binding) * bind-table +ptr Binding.count ptr+ @int
+    unbound +
+  end drop
+  let name-count in*
+
+  bind-table-count @int name-count < if
+    here eputs ": Assertion Failed: bind table underflow!\n" eputs
+    1 exit
+  end
+
+  bind-table-count name-count neg inc64-by
+end
+
 proc parse-block-stack-pop-closing-in* -- int in
   memory token sizeof(Token) end
   parse-block-stack-pop   // ip
   dup sizeof(Op) * ops +ptr // op
   dup Op.type ptr+ @int
   while dup OP_BIND_LETSTAR = over OP_BIND_PEEKSTAR = lor do
-    let begin-ip begin-op begin-type in
-      begin-op Op.operand ptr+ @int
-      let bind-count in
-        OP_UNBIND bind-count token push-op
-
-        bind-table-count @int bind-count < if
-          here eputs ": Assertion Failed: bind table underflow!\n" eputs
-          1 exit
-        end
-
-        bind-table-count @int
-        bind-count -
-        bind-table-count !int
-      end
-    end
+    let begin-ip begin-op begin-type in token begin-op unbind end
 
     parse-block-stack-pop   // ip
     dup sizeof(Op) * ops +ptr // op
@@ -4029,19 +4076,7 @@ in
                       local-memories-clean
                       false inside-proc !bool
                     else begin-type OP_BIND_LET = begin-type OP_BIND_PEEK = lor if*
-                      begin-op Op.operand ptr+ @int
-                      let bind-count in
-                        OP_UNBIND bind-count token push-op
-
-                        bind-table-count @int bind-count < if
-                          here eputs ": Assertion Failed: bind table underflow!\n" eputs
-                          1 exit
-                        end
-
-                        bind-table-count @int
-                        bind-count -
-                        bind-table-count !int
-                      end
+                      token begin-op unbind
                     else
                       begin-op Op.token ptr+
                       let begin-token in
@@ -4367,10 +4402,27 @@ in
                 dup @Str intrinsic-by-name if
                   OP_INTRINSIC swap token push-op
                 else drop dup @Str bind-table-lookup if*
-                  OP_PUSH_BIND
-                  swap
-                  token
-                  push-op
+                  let i in*
+                  i sizeof(Binding) * bind-table +ptr Binding.count ptr+ @int
+                  let count in*
+
+                  0 0 while dup i < do
+                    let words j in*
+                    j sizeof(Binding) * bind-table +ptr Binding.count ptr+ @int
+                    words +
+
+                    j 1 +
+                  end drop
+                  let words in*
+
+                  0 while dup count < do
+                    OP_PUSH_BIND
+                    over words +
+                    token
+                    push-op
+
+                    1 +
+                  end drop
                 else drop dup @Str const-lookup dup NULL ptr!= if*
                   dup Const.type ptr+ @int
                   assert "Exhaustive handling of data types in Const compilation\n" COUNT_DATATYPES 6 = end
