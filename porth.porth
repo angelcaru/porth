@@ -633,6 +633,11 @@ in
     69 exit
   end
 end
+
+proc ?type-float int -- bool in
+  dup DATATYPE_FLOAT =
+  swap DATATYPE_DOUBLE = lor
+end
 /// END DataType //////////////////////////////
 
 /// BEGIN Intrinsics //////////////////////////////
@@ -1714,16 +1719,17 @@ end
 proc callconv-arg-sysv-x86_64
   int // index
   --
-  int ptr // name of the register (if empty, pass on the stack)
+  int ptr // name of the register
+  bool // is actual register? (if false, pass on stack)
 in
   let idx in
-         idx 0 = if  "rdi"
-    else idx 1 = if* "rsi"
-    else idx 2 = if* "rdx"
-    else idx 3 = if* "rcx"
-    else idx 4 = if* "r8"
-    else idx 5 = if* "r9"
-    else 0 NULL end
+         idx 0 = if  "rdi" true
+    else idx 1 = if* "rsi" true
+    else idx 2 = if* "rdx" true
+    else idx 3 = if* "rcx" true
+    else idx 4 = if* "r8"  true
+    else idx 5 = if* "r9"  true
+    else 0 NULL false end
   end
 end
 
@@ -1893,21 +1899,52 @@ in
            "    mov [ret_stack_rsp], rsp\n" bfd bputs
            "    mov rsp, rax\n"             bfd bputs
         else type OP_CALL_EXTERN = if*
-           // TODO: support for floats in calls to extern procedures
            operand sizeof(Proc) * procs +ptr
-           let prok in
-             prok Proc.ins ptr+ TypeStack.count ptr+ @int 1 -
-             while dup 0 >= do
-               dup callconv-arg-sysv-x86_64
-               let regn regs in
-                 regn 0 != if
-                   "    pop " bfd bputs
-                   regn regs bfd bputs
-                   "\n" bfd bputs
-                 end
+           let prok in*
+           tmp-end
+             0 // xmm count
+             0 // int count
+             prok Proc.ins ptr+
+             type-stack-reverse
+             TypeStack.top ptr+ @ptr
+             let rev-top in*
+             // First pass, collect the amount of registers of each type
+             rev-top while dup ?null lnot do
+               let xmm-count int-count frame in*
+
+               frame TypeFrame.type ptr+ @int ?type-float if
+                  xmm-count 1 +
+                  int-count
+               else
+                  xmm-count
+                  int-count 1 +
                end
-               1 -
+
+               frame TypeFrame.prev ptr+ @ptr
              end drop
+
+             // Second pass, actually write the instructions
+             prok Proc.ins ptr+ TypeStack.top ptr+ @ptr
+             while dup ?null lnot do
+               let xmm-i int-i frame in*
+
+               frame TypeFrame.type ptr+ @int ?type-float if
+                 "    pop rax\n" bfd bputs
+                 "    movq xmm" bfd bputs xmm-i 1 - bfd bputu ", rax\n" bfd bputs
+                 xmm-i 1 -
+                 int-i
+               else
+                 "    pop " bfd bputs int-i 1 - callconv-arg-sysv-x86_64 lnot if
+                   prok Proc.loc ptr+                                                     eputloc
+                   ": ERROR: extern procedures cannot take that many arguments for now\n" eputs
+                   1 exit
+                 end bfd bputs "\n" bfd bputs
+                 xmm-i
+                 int-i 1 -
+               end
+
+               frame TypeFrame.prev ptr+ @ptr
+             end drop drop drop
 
              "    mov rbx, rsp\n"             bfd bputs
              "    mov rsp, [ret_stack_rsp]\n" bfd bputs
@@ -1917,22 +1954,22 @@ in
              "    mov [ret_stack_rsp], rsp\n" bfd bputs
              "    mov rsp, rbx\n"             bfd bputs
 
-             prok Proc.outs ptr+ TypeStack.count ptr+ @int 1 -
-             while dup 0 >= do
-               dup callconv-ret-sysv-x86_64
-               let regn regs in
-                 regn 0 = if
-                   prok Proc.loc ptr+ eputloc
-                   ": ERROR: a procedure cannot return that many values according to the calling convention on Linux x86_64\n" eputs
-                   1 exit
+             prok Proc.outs ptr+
+             let outs in*
+             outs TypeStack.count ptr+ @int
+             let count in
+               count 1 > if
+                 prok Proc.loc ptr+ eputloc
+                 ": ERROR: cannot have more than one return value in an extern procedure\n" eputs
+                 1 exit
+               else count 1 = if*
+                 outs TypeStack.top ptr+ @ptr TypeFrame.type ptr+ @int ?type-float if
+                   "    movq rax, xmm0\n" bfd bputs
                  end
-                 "    push " bfd bputs
-                 regn regs bfd bputs
-                 "\n" bfd bputs
+                 "    push rax\n" bfd bputs
                end
-               1 -
-             end drop
-           end
+             end
+           tmp-rewind
         else type OP_INLINED = if*
            // ignored
         else type OP_INTRINSIC = if*
