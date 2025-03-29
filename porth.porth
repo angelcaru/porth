@@ -36,6 +36,8 @@ inline proc eputloc ptr in stderr fputloc end
 /// Token is a group of characters within the source code that is
 /// recognized as certain class: int, word, string, etc.
 const TOKEN_INT     1 offset end
+const TOKEN_FLOAT   1 offset end
+const TOKEN_DOUBLE  1 offset end
 const TOKEN_WORD    1 offset end
 const TOKEN_KEYWORD 1 offset end
 const TOKEN_STR     1 offset end
@@ -376,6 +378,28 @@ in
   end
 end
 
+// NOTE: this is in porth.porth instead of the standard library because it depends on libc
+extern proc "strtod" libc/strtod ptr ptr -- double in end
+proc try-parse-double int ptr -- double bool in
+  memory endptr sizeof(ptr) end
+
+  tmp-end
+  let n s checkpoint in*
+    n s tmp-str-to-cstr dup endptr libc/strtod
+    swap n ptr+ endptr @ptr ptr=
+  checkpoint tmp-rewind
+end
+
+proc try-parse-float-lit int ptr -- float bool in
+  let n s in*
+  s n 1 - ptr+ @8 'f' != if
+    0.0f false return
+  end
+
+  n 1 - s try-parse-double
+  swap double2float swap
+end
+
 proc lexer-next-token
   ptr // token
   ptr // lexer
@@ -408,7 +432,8 @@ in
     lexer @ptr
     lexer-get-loc
 
-    assert "Exhaustive token types handling in lexer-next-token" COUNT_TOKENS 6 = end
+    assert "Exhaustive token types handling in lexer-next-token" COUNT_TOKENS 8 = end
+    // TODO: float and double literals
 
     dup Lexer.line ptr+ @Str.data @8 '"' = if
        // String literal
@@ -450,14 +475,20 @@ in
        str-chop-by-predicate
 
        word @Str try-parse-int if
-         token @ptr Token.value ptr+ !64
-         TOKEN_INT token @ptr Token.type ptr+ !64
+         token @ptr Token.value ptr+ !int
+         TOKEN_INT token @ptr Token.type ptr+ !int
+       else drop word @Str try-parse-double if*
+         token @ptr Token.value ptr+ !double
+         TOKEN_DOUBLE token @ptr Token.type ptr+ !int
+       else drop word @Str try-parse-float-lit if*
+         token @ptr Token.value ptr+ !float
+         TOKEN_FLOAT token @ptr Token.type ptr+ !int
        else drop word @Str keyword-by-name if*
-         token @ptr Token.value ptr+ !64
-         TOKEN_KEYWORD token @ptr Token.type ptr+ !64
+         token @ptr Token.value ptr+ !int
+         TOKEN_KEYWORD token @ptr Token.type ptr+ !int
        else drop
          word @Str  token @ptr Token.value ptr+ !Str
-         TOKEN_WORD token @ptr Token.type ptr+ !64
+         TOKEN_WORD token @ptr Token.type ptr+ !int
        end
     end
 
@@ -483,7 +514,7 @@ proc lex-file ptr in
 
   while token lexer lexer-next-token do
 
-    assert "Exhaustive handling of token types in lex-file" COUNT_TOKENS 6 = end
+    assert "Exhaustive handling of token types in lex-file" COUNT_TOKENS 8 = end
 
     token Token.loc ptr+ // loc
     dup Loc.file-path ptr+ @Str puts ":" puts
@@ -494,6 +525,10 @@ proc lex-file ptr in
     token Token.type ptr+ @64 // token.type
     dup TOKEN_INT = if
       "[INTEGER] " puts token Token.value ptr+ @int putu "\n" puts
+    else dup TOKEN_FLOAT = if*
+      "[FLOAT] " puts token Token.value ptr+ @int putu "\n" puts
+    else dup TOKEN_DOUBLE = if*
+      "[DOUBLE] " puts token Token.value ptr+ @int putu "\n" puts
     else dup TOKEN_WORD = if*
       "[WORD] " puts token Token.value ptr+ @Str puts "\n" puts
     else dup TOKEN_STR = if*
@@ -537,25 +572,15 @@ in
 
   dup HUMAN_SINGULAR = if
     drop
-    assert "Exhaustive handling of token types" COUNT_TOKENS 6 = end
-    dup TOKEN_INT = if
-      drop
-      "an integer"
-    else dup TOKEN_WORD = if*
-      drop
-      "a word"
-    else dup TOKEN_STR = if*
-      drop
-      "a string"
-    else dup TOKEN_CSTR = if*
-      drop
-      "a C-style string"
-    else dup TOKEN_CHAR = if*
-      drop
-      "a character"
-    else dup TOKEN_KEYWORD = if*
-      drop
-      "a keyword"
+    assert "Exhaustive handling of token types" COUNT_TOKENS 8 = end
+    dup TOKEN_INT = if drop "an integer"
+    else dup TOKEN_FLOAT = if* drop "a single-precision float"
+    else dup TOKEN_DOUBLE = if* drop "a double-precision float"
+    else dup TOKEN_WORD = if* drop "a word"
+    else dup TOKEN_STR = if* drop "a string"
+    else dup TOKEN_CSTR = if* drop "a C-style string"
+    else dup TOKEN_CHAR = if* drop "a character"
+    else dup TOKEN_KEYWORD = if* drop "a keyword"
     else
       drop
       here eputs ": unreachable\n" eputs
@@ -563,25 +588,15 @@ in
     end
   else dup HUMAN_PLURAL = if*
     drop
-    assert "Exhaustive handling of token types" COUNT_TOKENS 6 = end
-    dup TOKEN_INT = if
-      drop
-      "integers"
-    else dup TOKEN_WORD = if*
-      drop
-      "words"
-    else dup TOKEN_STR = if*
-      drop
-      "strings"
-    else dup TOKEN_CSTR = if*
-      drop
-      "C-style strings"
-    else dup TOKEN_CHAR = if*
-      drop
-      "characters"
-    else dup TOKEN_KEYWORD = if*
-      drop
-      "keywords"
+    assert "Exhaustive handling of token types" COUNT_TOKENS 8 = end
+    dup TOKEN_INT = if drop "integers"
+    else dup TOKEN_FLOAT = if* drop "single-precision floats"
+    else dup TOKEN_DOUBLE = if* drop "double-precision floats"
+    else dup TOKEN_WORD = if* drop "words"
+    else dup TOKEN_STR = if* drop "strings"
+    else dup TOKEN_CSTR = if* drop "C-style strings"
+    else dup TOKEN_CHAR = if* drop "characters"
+    else dup TOKEN_KEYWORD = if* drop "keywords"
     else
       drop
       here eputs ": unreachable\n" eputs
@@ -3941,7 +3956,7 @@ in
         false inside-proc !64
 
         while token lexer lexer-next-token do
-          assert "Exhaustive handling of Token types" COUNT_TOKENS 6 = end
+          assert "Exhaustive handling of Token types" COUNT_TOKENS 8 = end
 
           token Token.type ptr+
           token Token.loc ptr+
@@ -3958,6 +3973,26 @@ in
               end
 
               OP_PUSH_INT value @int token push-op
+            else type @int TOKEN_FLOAT = if*
+              inside-proc @bool lnot if
+                loc                                                  eputloc
+                ": ERROR: "                                          eputs
+                type @int HUMAN_PLURAL human-token-type              eputs
+                " are not allowed at the top level of the program\n" eputs
+                1 exit
+              end
+
+              OP_PUSH_FLOAT value @int token push-op
+            else type @int TOKEN_DOUBLE = if*
+              inside-proc @bool lnot if
+                loc                                                  eputloc
+                ": ERROR: "                                          eputs
+                type @int HUMAN_PLURAL human-token-type              eputs
+                " are not allowed at the top level of the program\n" eputs
+                1 exit
+              end
+
+              OP_PUSH_DOUBLE value @int token push-op
             else type @int TOKEN_KEYWORD = if*
               value @int
               let keyword in
@@ -4230,9 +4265,12 @@ in
                   end
 
                   type @int TOKEN_WORD != if
-                    // TODO: report what was found instead of a word
-                    loc                                       eputloc
-                    ": expected constant name to be a word\n" eputs
+                    loc                                        eputloc
+                    ": expected constant name to be "          eputs
+                    TOKEN_WORD HUMAN_SINGULAR human-token-type eputs
+                    " but found "                              eputs
+                    type @int HUMAN_SINGULAR human-token-type  eputs
+                    " instead\n"                               eputs
                     1 exit
                   end
 
@@ -4465,7 +4503,6 @@ in
 
               value // token.value
                 assert "Exhaustive handling of Op types in compile-file-into-ops" COUNT_OPS 30 = end
-                // TODO: float and double literals
                 dup @Str intrinsic-by-name if
                   OP_INTRINSIC swap token push-op
                 else drop dup @Str bind-table-lookup if*

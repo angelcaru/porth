@@ -779,7 +779,7 @@ proc timeit/from-here in
   end
 end
 
-const 1e9 1000000000 end
+const 1e9i 1000000000 end
 
 // TODO: timeit/to-here has too much responsibility
 // Logging and disabling/enabling thereof should not be a concern of it.
@@ -798,14 +798,14 @@ in
     timeit-end   timespec.tv_sec ptr+ @int
     timeit-begin timespec.tv_sec ptr+ @int
     -
-    1e9 *
+    1e9i *
     timeit-end   timespec.tv_nsec ptr+ @int
     timeit-begin timespec.tv_nsec ptr+ @int
     -
     +
-      dup 1e9 /        putu
+      dup 1e9i /        putu
       "."              puts
-      dup 1e9 % 9      put0u
+      dup 1e9i % 9      put0u
       " secs\n"        puts
     drop
   else

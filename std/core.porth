@@ -7,14 +7,8 @@ const NULL 0 cast(ptr) end
 const true  1 cast(bool) end
 const false 0 cast(bool) end
 
-const 0.0f 0 cast(float) end
-const 1.0f 1 int2float end
-const -1.0f -1 int2float end
 const PI. 1078530011 cast(float) end
 
-const 0.0 0 cast(double) end
-const 1.0 1 int2double end
-const -1.0 -1 int2double end
 const PI: 4614256656552045848 cast(double) end
 
 const sizeof(u64) 8 end

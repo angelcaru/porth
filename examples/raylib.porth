@@ -30,8 +30,6 @@ inline proc unpack-vector2 double -- float float in
   swap 32 shr 4294967295 and cast(float) swap cast(float)
 end
 
-inline proc .0f int -- float in int2float end
-
 inline proc BACKGROUND_COLOR -- int in 24 24 24 255 pack-color end
 inline proc FOREGROUND_COLOR -- int in 255 0 0 255 pack-color end
 
