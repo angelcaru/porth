@@ -2183,22 +2183,22 @@ in
             else operand INTRINSIC_F32_GT = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movd xmm0, eax\n"      bfd bputs
                 "    movd xmm1, ebx\n"      bfd bputs
                 "    comiss xmm0, xmm1\n"   bfd bputs
-                "    cmovg rcx, rdx\n"      bfd bputs
+                "    cmova rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_F64_GT = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movq xmm0, rax\n"      bfd bputs
                 "    movq xmm1, rbx\n"      bfd bputs
                 "    comisd xmm0, xmm1\n"   bfd bputs
-                "    cmovg rcx, rdx\n"      bfd bputs
+                "    cmova rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_LT = if*
                 "    mov rcx, 0\n"          bfd bputs
@@ -2211,22 +2211,22 @@ in
             else operand INTRINSIC_F32_LT = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movd xmm0, eax\n"      bfd bputs
                 "    movd xmm1, ebx\n"      bfd bputs
                 "    comiss xmm0, xmm1\n"   bfd bputs
-                "    cmovl rcx, rdx\n"      bfd bputs
+                "    cmovb rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_F64_LT = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movq xmm0, rax\n"      bfd bputs
                 "    movq xmm1, rbx\n"      bfd bputs
                 "    comisd xmm0, xmm1\n"   bfd bputs
-                "    cmovl rcx, rdx\n"      bfd bputs
+                "    cmovb rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_GE = if*
                 "    mov rcx, 0\n"          bfd bputs
@@ -2239,22 +2239,22 @@ in
             else operand INTRINSIC_F32_GE = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movd xmm0, eax\n"      bfd bputs
                 "    movd xmm1, ebx\n"      bfd bputs
                 "    comiss xmm0, xmm1\n"   bfd bputs
-                "    cmovge rcx, rdx\n"     bfd bputs
+                "    cmovae rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_F64_GE = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movq xmm0, rax\n"      bfd bputs
                 "    movq xmm1, rbx\n"      bfd bputs
                 "    comisd xmm0, xmm1\n"   bfd bputs
-                "    cmovge rcx, rdx\n"     bfd bputs
+                "    cmovae rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_LE = if*
                 "    mov rcx, 0\n"          bfd bputs
@@ -2267,22 +2267,22 @@ in
             else operand INTRINSIC_F32_LE = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movd xmm0, eax\n"      bfd bputs
                 "    movd xmm1, ebx\n"      bfd bputs
                 "    comiss xmm0, xmm1\n"   bfd bputs
-                "    cmovle rcx, rdx\n"     bfd bputs
+                "    cmovbe rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_F64_LE = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
-                "    pop rax\n"             bfd bputs
                 "    pop rbx\n"             bfd bputs
+                "    pop rax\n"             bfd bputs
                 "    movq xmm0, rax\n"      bfd bputs
                 "    movq xmm1, rbx\n"      bfd bputs
                 "    comisd xmm0, xmm1\n"   bfd bputs
-                "    cmovle rcx, rdx\n"     bfd bputs
+                "    cmovbe rcx, rdx\n"     bfd bputs
                 "    push rcx\n"            bfd bputs
             else operand INTRINSIC_NE = if*
                 "    mov rcx, 0\n"          bfd bputs
