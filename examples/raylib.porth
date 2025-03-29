@@ -1,0 +1,73 @@
+include "std.porth"
+
+linkflag "-L."
+linkflag "-lraylib"
+linkflag "-lm"
+
+extern proc "InitWindow" raylib/init-window int int ptr in end
+extern proc "SetTargetFPS" raylib/set-target-fps int in end
+extern proc "WindowShouldClose" raylib/window-should-close -- bool in end
+extern proc "BeginDrawing" raylib/begin-drawing in end
+extern proc "ClearBackground" raylib/clear-background int in end
+extern proc "DrawRectangle" raylib/draw-rectangle int int int int int in end
+extern proc "DrawRectangleV" raylib/draw-rectangle-v double double int in end
+extern proc "EndDrawing" raylib/end-drawing in end
+extern proc "CloseWindow" raylib/close-window in end
+extern proc "GetFrameTime" raylib/get-frame-time -- float in end
+
+inline proc pack-color int int int int -- int in
+  let r g b a in*
+  r 8 0 * shl
+  g 8 1 * shl or
+  b 8 2 * shl or
+  a 8 3 * shl or
+end
+
+inline proc pack-vector2 float float -- double in cast(int) 32 shl swap cast(int) or cast(double) end
+inline proc unpack-vector2 double -- float float in
+  cast(int)
+  dup 4294967295 and
+  swap 32 shr 4294967295 and cast(float) swap cast(float)
+end
+
+inline proc .0f int -- float in int2float end
+
+inline proc BACKGROUND_COLOR -- int in 24 24 24 255 pack-color end
+inline proc FOREGROUND_COLOR -- int in 255 0 0 255 pack-color end
+
+const WIDTH 640 end
+const HEIGHT 480 end
+
+const WIDTH. WIDTH int2float end
+const HEIGHT. HEIGHT int2float end
+
+const w 50 int2float end
+const h w end
+
+proc main in
+  WIDTH HEIGHT "Hello from Porth!"c raylib/init-window
+  //60 raylib/set-target-fps
+
+  1.0f 60 int2float 1.0f 60 int2float
+  while raylib/window-should-close lnot do
+    let x dx y dy in*
+    raylib/begin-drawing
+      BACKGROUND_COLOR raylib/clear-background
+
+      x y pack-vector2 w h pack-vector2 FOREGROUND_COLOR raylib/draw-rectangle-v
+
+      raylib/get-frame-time
+      let dt in
+        x dx dt *. +.
+        y dy dt *. +.
+      end
+      let new-x new-y in
+        //new-x dx new-y dy
+        new-x 0.0f >=. new-x w +. WIDTH.  <. land if new-x dx else x dx -1.0f *. end
+        new-y 0.0f >=. new-y h +. HEIGHT. <. land if new-y dy else y dy -1.0f *. end
+      end
+    raylib/end-drawing
+  end drop drop drop drop
+
+  raylib/close-window
+end

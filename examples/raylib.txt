@@ -1,0 +1,10 @@
+:i argc 0
+:b stdin 0
+
+:i returncode 1
+:b stdout 0
+
+:b stderr 104
+/usr/bin/ld: cannot find -lraylib: No such file or directory
+collect2: error: ld returned 1 exit status
+

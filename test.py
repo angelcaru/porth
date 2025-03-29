@@ -210,6 +210,7 @@ def usage(exe_name: str):
     print("      Print this message to stdout and exit with 0 code.")
 
 if __name__ == '__main__':
+    del os.environ["LANG"]
     # TODO: test.py should create ./porth native executable if does not exist yet
     exe_name, *argv = sys.argv
 
