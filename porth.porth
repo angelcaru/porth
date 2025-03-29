@@ -2150,14 +2150,14 @@ in
                 "    push rax\n" bfd bputs
             else operand INTRINSIC_DOUBLE2FLOAT = if*
                 "    pop rax\n" bfd bputs
-                "    movq xmm0, rax\n" bfd bputs
-                "    cvtsd2ss xmm0, xmm0\n" bfd bputs
+                "    movq xmm1, rax\n" bfd bputs
+                "    cvtsd2ss xmm0, xmm1\n" bfd bputs
                 "    movd eax, xmm0\n" bfd bputs
                 "    push rax\n" bfd bputs
             else operand INTRINSIC_FLOAT2DOUBLE = if*
                 "    pop rax\n" bfd bputs
-                "    movd xmm0, eax\n" bfd bputs
-                "    cvtsi2ss xmm0, xmm0\n" bfd bputs
+                "    movd xmm1, eax\n" bfd bputs
+                "    cvtss2sd xmm0, xmm1\n" bfd bputs
                 "    movq rax, xmm0\n" bfd bputs
                 "    push rax\n" bfd bputs
             else operand INTRINSIC_PRINT = if*
