@@ -3052,6 +3052,10 @@ in
   do
     token Token.type ptr+ @64 TOKEN_INT = if
       DATATYPE_INT token Token.value ptr+ @64 const-stack-push
+    else token Token.type ptr+ @64 TOKEN_FLOAT = if*
+      DATATYPE_FLOAT token Token.value ptr+ @64 const-stack-push
+    else token Token.type ptr+ @64 TOKEN_DOUBLE = if*
+      DATATYPE_DOUBLE token Token.value ptr+ @64 const-stack-push
     else token Token.type ptr+ @64 TOKEN_WORD = if*
       token Token.value ptr+ @Str intrinsic-by-name if
         assert "Exhaustive handling of casts in eval-const-value" COUNT_DATATYPES 6 = end
