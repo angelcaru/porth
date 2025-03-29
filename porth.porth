@@ -2186,6 +2186,7 @@ in
                 "    cmp rax, rbx\n"        bfd bputs
                 "    cmove rcx, rdx\n"      bfd bputs
                 "    push rcx\n"            bfd bputs
+            // TODO: nan == nan for some reason
             else operand INTRINSIC_F32_EQ = if*
                 "    mov rcx, 0\n"          bfd bputs
                 "    mov rdx, 1\n"          bfd bputs
