@@ -3195,6 +3195,16 @@ in
           token DATATYPE_DOUBLE const-stack-pop-expect-type cast(double)
           double2int
           DATATYPE_INT swap const-stack-push
+        else dup INTRINSIC_DOUBLE2FLOAT = if*
+          1 token const-expect-arity
+          token DATATYPE_DOUBLE const-stack-pop-expect-type cast(double)
+          double2float
+          DATATYPE_FLOAT swap cast(int) const-stack-push
+        else dup INTRINSIC_FLOAT2DOUBLE = if*
+          1 token const-expect-arity
+          token DATATYPE_FLOAT const-stack-pop-expect-type cast(float)
+          float2double
+          DATATYPE_DOUBLE swap cast(int) const-stack-push
         else dup INTRINSIC_OR = if*
           2 token const-expect-arity
           token DATATYPE_INT const-stack-pop-expect-type
