@@ -6172,7 +6172,7 @@ in
     "  SUBCOMMANDS:\n"                                                                         fd fputs
     "    com [OPTIONS] <file>  Compile the program\n"                                          fd fputs
     "      OPTIONS:\n"                                                                         fd fputs
-    // TODO: implement -o flag for com subcommand
+    "        -o <output-file>    Final executable will be stored in <output-file>\n"           fd fputs
     "        -g                  Use GNU as instead of fasm\n"                                 fd fputs
     "                              (GNU as can generate line number info, fasm can't)\n"       fd fputs
     "        -r                  Run the program after successful compilation\n"               fd fputs
@@ -6238,6 +6238,8 @@ proc main in
 
   memory input-file-path-cstr sizeof(ptr) end
   NULL input-file-path-cstr !ptr
+  memory output-file-path sizeof(ptr) end
+  NULL output-file-path !ptr
   memory base-file-path sizeof(Str) end
   0 NULL base-file-path !Str
   memory run sizeof(bool) end
@@ -6257,6 +6259,15 @@ proc main in
       else args @@ptr "-s"c cstreq if*
         true silent !bool
         true  // continue
+      else args @@ptr "-o"c cstreq if*
+        args sizeof(ptr) inc64-by
+        args @@ptr dup ?null if
+          program @ptr stderr usage
+          "[ERROR] -o flag must take an argument.\n" eputs
+          1 exit
+        end
+        output-file-path !ptr
+        true // continue
       else
         args @@ptr input-file-path-cstr !ptr
         args sizeof(ptr) inc64-by
@@ -6274,6 +6285,13 @@ proc main in
 
     input-file-path-cstr @ptr compile-program-into-ops
     unsafe @bool lnot if type-check-program end
+
+    output-file-path @ptr ?null if
+      fpb-end
+        base-file-path @Str fpb-append drop
+        1                   fpb-alloc  drop
+      output-file-path !ptr
+    end
 
     timeit/from-here
       fpb-end
@@ -6360,10 +6378,7 @@ proc main in
       cmd-dev-null-stdout !bool
 
       fpb-end
-        fpb-end
-          base-file-path @Str fpb-append drop
-          1                   fpb-alloc  drop
-
+        output-file-path @ptr
         fpb-end
           base-file-path @Str fpb-append drop
           ".tmp"              fpb-append drop
@@ -6385,23 +6400,17 @@ proc main in
 
       fpb-end
         tmp-end
-        "chmod"c      tmp-append-ptr
-        "+x"c         tmp-append-ptr
-        fpb-end
-          base-file-path @Str fpb-append drop
-          1                   fpb-alloc  drop
-          tmp-append-ptr
-        NULL          tmp-append-ptr
+        "chmod"c              tmp-append-ptr
+        "+x"c                 tmp-append-ptr
+        output-file-path @ptr tmp-append-ptr
+        NULL                  tmp-append-ptr
         silent @bool lnot cmd-echoed
       fpb-rewind
     "[INFO] Linking" silent @bool timeit/to-here
 
     run @bool if
       tmp-end
-      fpb-end
-        base-file-path @Str fpb-append drop
-        1 fpb-alloc drop
-        tmp-append-ptr
+      output-file-path @ptr tmp-append-ptr
       while args @@ptr NULL ptr!= do
         args @@ptr tmp-append-ptr
         args sizeof(ptr) inc64-by
