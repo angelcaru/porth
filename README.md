@@ -18,7 +18,7 @@ Porth is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programmi
 
 ## Examples
 
-Hello, World:
+### Hello, World
 
 ```porth
 include "std.porth"
@@ -28,7 +28,7 @@ proc main in
 end
 ```
 
-Simple program that prints numbers from 0 to 99 in an ascending order:
+### Simple program that prints numbers from 0 to 99 in an ascending order
 
 ```porth
 include "std.porth"
@@ -40,7 +40,7 @@ proc main in
 end
 ```
 
-Raylib Speedrun:
+### Raylib Speedrun
 
 ```porth
 include "std.porth"
